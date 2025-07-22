@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from "react";
-import ImageWithBasePath from "../../../core/img/imagewithbasebath";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { all_routes } from "../../../Router/all_routes";
 import { getUsers } from "../../../core/redux/action";
@@ -80,10 +79,10 @@ const Signin = () => {
             <form action="index" onSubmit={handleSubmit}>
               <div className="login-userset">
                 <div className="login-logo logo-normal">
-                  <ImageWithBasePath src="assets/img/logo.png" alt="img" />
+                  <img src="assets/img/logo.png" alt="img" />
                 </div>
                 <Link to={route.dashboard} className="login-logo logo-white">
-                  <ImageWithBasePath src="assets/img/logo-white.png" alt />
+                  <img src="assets/img/logo-white.png" alt />
                 </Link>
                 <div className="login-userheading">
                   <h3>Sign In</h3>
@@ -96,7 +95,7 @@ const Signin = () => {
                   <div className="form-addons">
                     <input type="text" className="form- control" ref={emailRef} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                     {errors.email && <p style={{ color: "#ff7676" }}>{errors.email}</p>}
-                    <ImageWithBasePath
+                    <img
                       src="assets/img/icons/mail.svg"
                       alt="img"
                     />
@@ -159,7 +158,7 @@ const Signin = () => {
                   <ul className="d-flex">
                     <li>
                       <Link to="#" className="facebook-logo">
-                        <ImageWithBasePath
+                        <img
                           src="assets/img/icons/facebook-logo.svg"
                           alt="Facebook"
                         />
@@ -167,7 +166,7 @@ const Signin = () => {
                     </li>
                     <li>
                       <Link to="#">
-                        <ImageWithBasePath
+                        <img
                           src="assets/img/icons/google.png"
                           alt="Google"
                         />
@@ -175,7 +174,7 @@ const Signin = () => {
                     </li>
                     <li>
                       <Link to="#" className="apple-logo">
-                        <ImageWithBasePath
+                        <img
                           src="assets/img/icons/apple-logo.svg"
                           alt="Apple"
                         />
