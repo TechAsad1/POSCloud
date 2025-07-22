@@ -1,5 +1,5 @@
 import React from "react";
-// import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.js";
 import { base_path } from "./environment.jsx";
@@ -13,7 +13,6 @@ import { createRoot } from "react-dom/client";
 import { Provider } from "react-redux";
 import store from "./core/redux/store.jsx";
 import AllRoutes from "./Router/router.jsx";
-import { HashRouter } from "react-router-dom";
 
 const rootElement = document.getElementById("root");
 if (rootElement) {
@@ -21,9 +20,9 @@ if (rootElement) {
   root.render(
     <React.StrictMode>
       <Provider store={store}>
-        <HashRouter basename={base_path}>
+        <BrowserRouter basename={base_path}>
           <AllRoutes />
-        </HashRouter>
+        </BrowserRouter>
       </Provider>
     </React.StrictMode>
   );
