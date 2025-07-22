@@ -1,0 +1,161 @@
+              <div
+                className="tab-pane fade"
+                id="pills-profile"
+                role="tabpanel"
+                aria-labelledby="pills-profile-tab"
+              >
+                {/* /product list */}
+                <div className="card table-list-card">
+                  <div className="card-body">
+                    <div className="table-top">
+                      <div className="search-set">
+                        <div className="search-input">
+                          <input
+                            type="text"
+                            placeholder="Search"
+                            className="form-control form-control-sm formsearch"
+                          />
+                          <Link to className="btn btn-searchset">
+                            <i
+                              data-feather="search"
+                              className="feather-search"
+                            />
+                          </Link>
+                        </div>
+                      </div>
+                      <div className="search-path">
+                        <Link
+                          className={`btn btn-filter ${isFilterVisible ? "setclose" : ""
+                            }`}
+                          id="filter_search"
+                        >
+                          <Filter
+                            className="filter-icon"
+                            onClick={toggleFilterVisibility}
+                          />
+                          <span onClick={toggleFilterVisibility}>
+                            <ImageWithBasePath
+                              src="assets/img/icons/closes.svg"
+                              alt="img"
+                            />
+                          </span>
+                        </Link>
+                      </div>
+                      <div className="form-sort">
+                        <Sliders className="info-img" />
+                        <Select
+                          className="img-select"
+                          classNamePrefix="react-select"
+                          options={oldandlatestvalue}
+                          placeholder="Newest"
+                        />
+                      </div>
+                    </div>
+                    {/* /Filter */}
+                    <div className="card" id="filter_inputs1">
+                      <div className="card-body pb-0">
+                        <div className="row">
+                          <div className="col-lg-3 col-sm-6 col-12">
+                            <div className="input-blocks">
+                              <i data-feather="box" className="info-img" />
+                              <select className="react-select">
+                                <option>Choose Product</option>
+                                <option>Lenovo 3rd Generation </option>
+                                <option>Nike Jordan</option>
+                                <option>Amazon Echo Dot </option>
+                              </select>
+                            </div>
+                          </div>
+                          <div className="col-lg-3 col-sm-6 col-12">
+                            <div className="input-blocks">
+                              <i data-feather="zap" className="info-img" />
+                              <select className="react-select">
+                                <option>Choose Category</option>
+                                <option>Laptop</option>
+                                <option>Shoe</option>
+                                <option>Speaker</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div className="col-lg-3 col-sm-6 col-12">
+                            <div className="input-blocks">
+                              <i data-feather="archive" className="info-img" />
+                              <select className="react-select">
+                                <option>Choose Warehouse</option>
+                                <option>Lavish Warehouse </option>
+                                <option>Lobar Handy </option>
+                                <option>Traditional Warehouse </option>
+                              </select>
+                            </div>
+                          </div>
+                          <div className="col-lg-3 col-sm-6 col-12 ms-auto">
+                            <div className="input-blocks">
+                              <Link className="btn btn-filters ms-auto">
+                                {" "}
+                                <i
+                                  data-feather="search"
+                                  className="feather-search"
+                                />{" "}
+                                Search{" "}
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    {/* /Filter */}
+                    <div className="table-responsive">
+                      <Table columns={columns} dataSource={dataSource} />
+                    </div>
+                  </div>
+                </div>
+                {/* /product list */}
+              </div>
+
+
+
+              <ul className="nav nav-pills" id="pills-tab" role="tablist">
+                <li className="nav-item" role="presentation">
+                  <button
+                    className="nav-link active"
+                    id="purchase-report-tab"
+                    data-bs-toggle="pill"
+                    data-bs-target="#purchase-report"
+                    type="button"
+                    role="tab"
+                    aria-controls="purchase-report"
+                    aria-selected="true"
+                  >
+                    Purchase
+                  </button>
+                </li>
+                <li className="nav-item" role="presentation">
+                  <button
+                    className="nav-link"
+                    id="payment-report-tab"
+                    data-bs-toggle="pill"
+                    data-bs-target="#payment-report"
+                    type="button"
+                    role="tab"
+                    aria-controls="payment-report"
+                    aria-selected="false"
+                  >
+                    Payment
+                  </button>
+                </li>
+                {/* <li className="nav-item" role="presentation">
+                  <button
+                    className="nav-link"
+                    id="return-report-tab"
+                    data-bs-toggle="pill"
+                    data-bs-target="#return-report"
+                    type="button"
+                    role="tab"
+                    aria-controls="return-report"
+                    aria-selected="false"
+                  >
+                    Return
+                  </button>
+                </li> */}
+              </ul>
+    
