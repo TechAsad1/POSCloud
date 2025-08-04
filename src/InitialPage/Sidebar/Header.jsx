@@ -135,7 +135,10 @@ const Header = () => {
           onMouseOver={expandMenuOpen}
         >
           <Link to="/admin-dashboard" className="logo logo-normal">
-            <ImageWithBasePath src="assets/img/logo.png" alt="img" />
+            <h4 style={{ color: "#67748E" }}>
+              I.T Mechanix POSNext
+            </h4>
+            {/* <ImageWithBasePath src="assets/img/logo.png" alt="img" /> */}
           </Link>
           <Link to="/admin-dashboard" className="logo logo-white">
             <ImageWithBasePath src="assets/img/logo-white.png" alt="img" />

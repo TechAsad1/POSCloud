@@ -67,7 +67,6 @@ const Signin = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
-      alert("Login!");
       navigate(from, { replace: true });
     }
   }
@@ -75,7 +74,7 @@ const Signin = () => {
     <div className="main-wrapper">
       <div className="account-content">
         <div className="login-wrapper bg-img">
-          <div className="login-content">
+          <div className="login-content" style={{ width: '100%' }}>
             <form action="index" onSubmit={handleSubmit}>
               <div className="login-userset">
                 <div className="login-logo logo-normal">
@@ -115,7 +114,8 @@ const Signin = () => {
                       className={`fas toggle-password ${isPasswordVisible ? "fa-eye" : "fa-eye-slash"
                         }`}
                       onClick={togglePasswordVisibility}
-                    ></span>
+                    >
+                    </span>
                   </div>
                 </div>
                 <div className="form-login authentication-check">
@@ -137,7 +137,9 @@ const Signin = () => {
                   </div>
                 </div>
                 <div className="form-login">
-                  <button>Sign In</button>
+                  <center>
+                    <button className="btn">Sign In</button>
+                  </center>
                   {/* <Link to={route.dashboard} className="btn btn-login">
                     Sign In
                   </Link> */}
