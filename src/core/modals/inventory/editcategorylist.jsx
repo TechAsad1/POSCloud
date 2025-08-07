@@ -32,7 +32,7 @@ const EditCategoryList = (p) => {
             setImage(defImg);
         }
         else {
-            setImage("http://localhost:5057/api/Category/getImg/" + res.imageName);
+            setImage("https://poscloud.itmechanix.com/api/Category/getImg/" + res.imageName);
             setIsImageVisible(true);
         }
         setErrors({ ...errors, name: "" });
@@ -119,7 +119,7 @@ const EditCategoryList = (p) => {
         }
     }
     const uploadImage = async () => {
-        const url = 'http://localhost:5057/api/Product/uploadImg/file1';
+        const url = 'https://poscloud.itmechanix.com/api/Product/uploadImg/file1';
         const formData = new FormData();
         formData.append('file', getImgFile);
         const response = await axios.post(url, formData, {
