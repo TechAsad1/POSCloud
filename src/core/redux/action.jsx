@@ -679,7 +679,6 @@ export const getPurchaseByID = (id) => async (dispatch) => {
 export const insertPurchaseVar = "InsertPurchase";
 export const insertPurchase = (temp) => async (dispatch) => {
   try {
-    console.log(temp);
     await axios.post(purchaseUrl, temp).then((res) => {
       dispatch({ type: insertPurchaseVar, payload: res.data });
     });
@@ -703,7 +702,7 @@ export const getTransactionIDVar = "TransactionID";
 export const getTransactionID = () => async (dispatch) => {
   dispatch({ type: FetchLoader });
   try {
-    const response = await axios.get("http://localhost:5057/api/Transactions/GetTransactionID");
+    const response = await axios.get(transactionUrl + "/GetTransactionID");
     dispatch({ type: getTransactionIDVar, payload: response.data.message });
   } catch (error) {
     dispatch({ type: FetchErr, payload: error.message });

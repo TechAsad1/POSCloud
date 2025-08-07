@@ -365,8 +365,8 @@ const Pos = () => {
   const insertInv = async (isHold) => {
     if (cartStore.length > 0) {
       const temp = {
-        clientId: 1,
-        branchId: 1,
+        clientId: loginUser?.clientId,
+        branchId: loginUser?.branchId,
         createdBy: loginUser?.userId,
         customerId: cart.customerID,
         paymentMode: cart.paymentMode,
@@ -390,8 +390,8 @@ const Pos = () => {
       }
       cartStore.map((x) => (
         dispatch(insertSale({
-          clientId: 1,
-          branchId: 1,
+          clientId: loginUser?.clientId,
+          branchId: loginUser?.branchId,
           receiptNo: rid,
           productId: x.id,
           quantity: x.qty,
