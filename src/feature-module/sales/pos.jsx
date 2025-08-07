@@ -1569,7 +1569,7 @@ const Pos = () => {
                             <tr key={x.id}>
                               <td>{dateFormat(x.createdDate)}</td>
                               <td>INV/SL{x.rid}</td>
-                              <td>{invStore.find((i)=>i.receiptNo === x.rid).customer}</td>
+                              <td>{customerStore.find(a=>a.customerId === invStore.find(i=>i.receiptNo === x.rid)?.customerId)?.customerName}</td>
                               <td>{x.total}</td>
                               {/*<td className="action-table-data">
                                 <div className="edit-delete-action">
