@@ -20,6 +20,7 @@ import { useReactToPrint } from 'react-to-print';
 import { getImageFromUrl } from '../../helper/helpers'
 import axios from 'axios'
 import { all_routes } from '../../Router/all_routes'
+import "./pos.css";
 
 const Pos = () => {
 
@@ -122,7 +123,7 @@ const Pos = () => {
   const catStore = useSelector((state) => state.categories);
   const productStore1 = useSelector((state) => state.posts);
   const cartStore = useSelector((state) => state.cart);
-  const invStore = useSelector((state) => state.invs);
+  const invStore = useSelector((state) => state.saleInv);
   const trInv = useSelector((state) => state.trInv);
   const trID = useSelector((state) => state.trID);
   const users = useSelector((state) => state.users);
@@ -166,6 +167,7 @@ const Pos = () => {
   const closeUpdateProBtn = useRef();
   const [errors, setErrors] = useState({});
   const [editProID, setEditProID] = useState(0);
+
 
   useEffect(() => {
     dispatch(clearCart());
@@ -315,6 +317,7 @@ const Pos = () => {
       currency: "PKR",
     }).format(amount);
   }
+
   //PaymentMode
   const handlePaymentMode = (e) => {
     cashRef.current.classList.remove("paymentMode_Active");
@@ -1564,11 +1567,11 @@ const Pos = () => {
                         <tbody>
                           {trInv?.length > 0 && trInv?.filter((i) => i.clientId === loginUser?.clientId && i.branchId === loginUser?.branchId).map((x) => (
                             <tr key={x.id}>
-                              <td>{dateFormat(x.date)}</td>
+                              <td>{dateFormat(x.createdDate)}</td>
                               <td>INV/SL{x.rid}</td>
-                              <td>{x.userName}</td>
+                              <td>{invStore.find((i)=>i.receiptNo === x.rid).customer}</td>
                               <td>{x.total}</td>
-                              {/* <td className="action-table-data">
+                              {/*<td className="action-table-data">
                                 <div className="edit-delete-action">
                                   <Link className="me-2 p-2" to="#">
                                     <i data-feather="eye" className="feather-eye" />
@@ -1586,7 +1589,7 @@ const Pos = () => {
                                     />
                                   </Link>
                                 </div>
-                              </td> */}
+                              </td>*/}
                             </tr>
                           ))}
                         </tbody>
