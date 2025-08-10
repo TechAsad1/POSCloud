@@ -229,59 +229,53 @@ const Pos = () => {
   //UpdatePro
   const [updatePro, setUpdatePro] = useState({ _selectedUnit: "Choose Option", gstPerc: 0, gst: 0, discPerc: 0, disc: 0, _price: 0, qty: 0, total: 0 });
 
-  const [unitList, setUnitList] = useState([
-    { value: "Choose Option", label: "Choose Option" }
-  ]);
-  const [selectUnit, setSelectedUnit] = useState(unitList[0]);
-
-  const addUnit = (unit) => {
-    if (!unitList.some(u => u.value === unit)) {
-      setUnitList(prev => [
-        ...prev,
-        { value: unit, label: unit }
-      ]);
-    }
-  };
+  const [unitList, setUnitList] = useState([]);
+  const [selectUnit, setSelectedUnit] = useState([]);
 
   const handleSelectedUnit = (e) => {
     var x = cartStore.find((x) => x.id === editProID);
     if (x != null) {
-      if (x.secUnit != "") {
+      if (e.value != "Choose Option") {
         setSelectedUnit([{ value: e.value, label: e.label }])
-        if (e.value === x.unit) {
-          //Box
-          let _total = x.SPrice * x.qty;
+        if (e.value === x.minUom) {
+          //Pcs
+          let _singlePrice = x.price / x.factor;
+          let _total = _singlePrice * x.qty;
           let _gst = _total * updatePro.gstPerc / 100;
           let _disc = _total * updatePro.discPerc / 100;
           _total -= _disc;
           _total += _gst;
-          setUpdatePro({ ...updatePro, _selectedUnit: e.value, _price: x.SPrice, total: _total, gst: _gst, disc: _disc });
+          setUpdatePro({ ...updatePro, _selectedUnit: e.value, _price: _singlePrice, total: _total, gst: _gst, disc: _disc });
         }
         else {
-          //Pcs
-          let _total = x.secUnitPrice * x.qty;
+          //Box
+          let _total = x.price * x.qty;
           let _gst = _total * updatePro.gstPerc / 100;
           let _disc = _total * updatePro.discPerc / 100;
           _total -= _disc;
           _total += _gst;
-          setUpdatePro({ ...updatePro, _selectedUnit: e.value, _price: x.secUnitPrice, total: _total, gst: _gst, disc: _disc });
+          setUpdatePro({ ...updatePro, _selectedUnit: e.value, _price: x.price, total: _total, gst: _gst, disc: _disc });
         }
       }
     }
   }
 
   useEffect(() => {
-    var match = unitList.find((x) => x.value === updatePro._selectedUnit && x.label === updatePro._selectedUnit);
-    setSelectedUnit(match);
-  }, [updatePro._selectedUnit]);
+    if (unitList.length > 1)
+      setSelectedUnit(unitList[1]);
+    else
+      setSelectedUnit(unitList[0]);
+  }, [unitList[0]]);
 
   const handleEditProductByID = (e) => {
     setEditProID(e);
     const x = cartStore.filter((i) => i.id === e);
-    addUnit(x[0].unit);
-    if (x[0].secUnit != "") {
-      addUnit(x[0].secUnit);
-    }
+    if (!x) return;
+    setUnitList([]);
+    const units = [{ value: x[0].minUom, label: x[0].minUom }];
+    if (x[0].minUom != x[0].maxUom)
+      units.push({ value: x[0].maxUom, label: x[0].maxUom });
+    setUnitList(units);
     setUpdatePro({ ...updatePro, _selectedUnit: x[0].selectedUnit, qty: x[0].qty, _price: x[0].price, total: (x[0].total - x[0].disc) + x[0].gst, discPerc: x[0].discPerc, disc: x[0].disc, gstPerc: x[0].gstPerc, gst: x[0].gst });
   }
   const calculateGst_Edit = (perc, total) => {
@@ -1476,7 +1470,6 @@ const Pos = () => {
               </form>
             </div>
 
-
           </div>
         </div>
       </div>
@@ -1569,7 +1562,7 @@ const Pos = () => {
                             <tr key={x.id}>
                               <td>{dateFormat(x.createdDate)}</td>
                               <td>INV/SL{x.rid}</td>
-                              <td>{customerStore.find(a=>a.customerId === invStore.find(i=>i.receiptNo === x.rid)?.customerId)?.customerName}</td>
+                              <td>{customerStore.find(a => a.customerId === invStore.find(i => i.receiptNo === x.rid)?.customerId)?.customerName}</td>
                               <td>{x.total}</td>
                               {/*<td className="action-table-data">
                                 <div className="edit-delete-action">
