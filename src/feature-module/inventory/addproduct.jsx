@@ -59,6 +59,7 @@ const AddProduct = () => {
   const [selectMinUom, setSelectMinUom] = useState(unitList[0]);
 
   const [selectMaxUom, setSelectMaxUom] = useState(unitList[0]);
+
   //Ref
   const nameRef = useRef();
   const cPriceRef = useRef();
@@ -290,6 +291,65 @@ const AddProduct = () => {
     e[15].value = "";
   }
 
+
+
+  const change_ConsumerPrice = (val) => {
+    calculate_FormData(val, formData.sPrice, formData.discPerc, formData.disc, formData.gstPerc, formData.gst, false, false, false);
+  }
+  const change_SalePrice = (val) => {
+    calculate_FormData(formData.consumerPrice, val, formData.discPerc, formData.disc, formData.gstPerc, formData.gst, true, false, false);
+  }
+  const change_DiscPerc = (val) => {
+    calculate_FormData(formData.consumerPrice, formData.sPrice, val, formData.disc, formData.gstPerc, formData.gst, false, false, false);
+  }
+  const change_DiscAmount = (val) => {
+    calculate_FormData(formData.consumerPrice, formData.sPrice, formData.discPerc, val, formData.gstPerc, formData.gst, false, true, false);
+  }
+  const change_GstPerc = (val) => {
+    calculate_FormData(formData.consumerPrice, formData.sPrice, formData.discPerc, formData.disc, val, formData.gst, false, false, false);
+  }
+  const change_GstAmount = (val) => {
+    calculate_FormData(formData.consumerPrice, formData.sPrice, formData.discPerc, formData.disc, formData.gstPerc, val, false, false, true);
+  }
+
+
+  const calculate_FormData = (consumerPrice, sPrice, discPerc, disc, gstPerc, gst, isSale, isDisc, isGst) => {
+
+    const toNum = (val) => parseFloat(val) || 0;
+
+    let _consumerPrice = toNum(consumerPrice);
+    let _sPrice = toNum(sPrice);
+    let _discPerc = toNum(discPerc);
+    let _disc = toNum(disc);
+    let _gstPerc = toNum(gstPerc);
+    let _gst = toNum(gst);
+
+    let amount = 0;
+
+    if (!isSale)
+      amount = _consumerPrice;
+    else
+      amount = _sPrice;
+
+    if (isDisc)
+      _discPerc = (_disc / amount) * 100;
+    else
+      _disc = (amount * _discPerc) / 100;
+
+    if (isGst)
+      _gstPerc = (_gst / amount) * 100;
+    else
+      _gst = (amount * _gstPerc) / 100;
+
+    if (!isSale) {
+      _sPrice = (amount - _disc) + _gst;
+    } else {
+      _consumerPrice = amount + _disc;
+    }
+
+    setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _sPrice, discPerc: _discPerc, disc: _disc, gstPerc: _gstPerc, gst: _gst });
+  }
+
   const navigate = useNavigate();
   const val = localStorage.getItem("userID");
   useEffect(() => {
@@ -359,7 +419,6 @@ const AddProduct = () => {
                       <div className="addproduct-icon">
                         <h5>
                           <Info className="add-info" />
-
                           <span>Product Information</span>
                         </h5>
                         <Link to="#">
@@ -411,7 +470,7 @@ const AddProduct = () => {
                       <div className="add-product-new">
                         <div className="row">
                           {/* Category */}
-                          <div className="col-lg-4 col-sm-6 col-12">
+                          <div className="col-lg-6 col-sm-6 col-12">
                             <div className="mb-3 add-product is-invalid">
                               <div className="add-newplus">
                                 <label className="form-label">Category</label>
@@ -436,7 +495,7 @@ const AddProduct = () => {
                             </div>
                           </div>
                           {/* Brand */}
-                          <div className="col-lg-4 col-sm-6 col-12">
+                          <div className="col-lg-6 col-sm-6 col-12">
                             <div className="mb-3 add-product">
                               <div className="add-newplus">
                                 <label className="form-label">Brand</label>
@@ -458,6 +517,9 @@ const AddProduct = () => {
                               />
                             </div>
                           </div>
+                        </div>
+                        <div className="row">
+
                           {/* Unit */}
                           <div className="col-lg-4 col-sm-6 col-12">
                             <div className="mb-3 add-product">
@@ -483,8 +545,15 @@ const AddProduct = () => {
                               {errors.minUom && <span style={{ color: "#ff7f7f" }}>{errors.minUom}</span>}
                             </div>
                           </div>
-                        </div>
-                        <div className="row">
+
+                          <div className="col-lg-4 col-sm-6 col-12">
+                            <div className="mb-3 add-product">
+                              <label className="form-label">Factor#</label>
+                              <input type="number" className="form-control" placeholder="factor" ref={factorRef} defaultValue={0} onChange={(e) => setFormData({ ...formData, factor: e.target.value })} />
+                              {errors.factor && <span style={{ color: "#ff7f7f" }}>{errors.factor}</span>}
+                            </div>
+                          </div>
+
                           <div className="col-lg-4 col-sm-6 col-12">
                             <div className="mb-3 add-product">
                               <label className="form-label">MaxUom</label>
@@ -498,13 +567,7 @@ const AddProduct = () => {
                             </div>
                             {errors.maxUom && <span style={{ color: "#ff7f7f" }}>{errors.maxUom}</span>}
                           </div>
-                          <div className="col-lg-4 col-sm-6 col-12">
-                            <div className="mb-3 add-product">
-                              <label className="form-label">Factor#</label>
-                              <input type="number" className="form-control" placeholder="factor" ref={factorRef} defaultValue={0} onChange={(e) => setFormData({ ...formData, factor: e.target.value })} />
-                              {errors.factor && <span style={{ color: "#ff7f7f" }}>{errors.factor}</span>}
-                            </div>
-                          </div>
+
                         </div>
                       </div>
                       {/* Editor Description */}
@@ -568,12 +631,12 @@ const AddProduct = () => {
                             <div className="col-lg-4 col-sm-6 col-12">
                               <div className="input-blocks add-product">
                                 <label>Consumer Price</label>
-                                <input type="number" className="form-control" defaultValue="0" onChange={(e) => setFormData({ ...formData, qty: e.target.value })} />
+                                <input type="number" className="form-control" defaultValue="0" value={formData.consumerPrice} onChange={(e) => change_ConsumerPrice(e.target.value)} />
                               </div>
                             </div>
                             <div className="col-lg-4 col-sm-6 col-12">
                               <div className="input-blocks add-product">
-                                <label>Cost Price</label>
+                                <label>Purchase Price</label>
                                 <input type="number" className="form-control" defaultValue="0" ref={cPriceRef} onChange={(e) => setFormData({ ...formData, cPrice: e.target.value })} required />
                                 {errors.cPrice && <p className="invalid-feedback">{errors.cPrice}</p>}
                               </div>
@@ -581,7 +644,7 @@ const AddProduct = () => {
                             <div className="col-lg-4 col-sm-6 col-12">
                               <div className="input-blocks add-product">
                                 <label>Sale Price</label>
-                                <input type="number" className="form-control" defaultValue="0" ref={sPriceRef} onChange={(e) => setFormData({ ...formData, sPrice: e.target.value })} required />
+                                <input type="number" className="form-control" defaultValue="0" value={formData.sPrice} ref={sPriceRef} onChange={(e) => change_SalePrice(e.target.value)} required />
                                 {errors.sPrice && <p className="invalid-feedback">{errors.sPrice}</p>}
                               </div>
                             </div>
@@ -590,25 +653,25 @@ const AddProduct = () => {
                             <div className="col-lg-3 col-sm-6 col-12">
                               <div className="input-blocks add-product">
                                 <label>Discount Percent(%)</label>
-                                <input type="number" placeholder="Choose" className="form-control" defaultValue="0" onChange={(e) => setFormData({ ...formData, discPerc: e.target.value })} />
+                                <input type="number" placeholder="Choose" className="form-control" defaultValue="0" value={formData.discPerc} onChange={(e) => change_DiscPerc(e.target.value)} />
                               </div>
                             </div>
                             <div className="col-lg-3 col-sm-6 col-12">
                               <div className="input-blocks add-product">
                                 <label>Discount Amount</label>
-                                <input type="number" placeholder="Choose" className="form-control" defaultValue="0" onChange={(e) => setFormData({ ...formData, disc: e.target.value })} />
+                                <input type="number" placeholder="Choose" className="form-control" defaultValue="0" value={formData.disc} onChange={(e) => change_DiscAmount(e.target.value)} />
                               </div>
                             </div>
                             <div className="col-lg-3 col-sm-6 col-12">
                               <div className="input-blocks add-product">
                                 <label>Gst Percent(%)</label>
-                                <input type="number" className="form-control" defaultValue="0" onChange={(e) => setFormData({ ...formData, gstPerc: e.target.value })} />
+                                <input type="number" className="form-control" defaultValue="0" value={formData.gstPerc} onChange={(e) => change_GstPerc(e.target.value)} />
                               </div>
                             </div>
                             <div className="col-lg-3 col-sm-6 col-12">
                               <div className="input-blocks add-product">
                                 <label>Tax(GST) Amount</label>
-                                <input type="number" className="form-control" defaultValue="0" onChange={(e) => setFormData({ ...formData, gst: e.target.value })} />
+                                <input type="number" className="form-control" defaultValue="0" value={formData.gst} onChange={(e) => change_GstAmount(e.target.value)} />
                               </div>
                             </div>
                           </div>
@@ -674,335 +737,11 @@ const AddProduct = () => {
                             </div>
                           </div>
                         </div>
-                        {/* <div
-                          className="tab-pane fade"
-                          id="pills-profile"
-                          role="tabpanel"
-                          aria-labelledby="pills-profile-tab"
-                        >
-                          <div className="row select-color-add">
-                            <div className="col-lg-6 col-sm-6 col-12">
-                              <div className="input-blocks add-product">
-                                <label>Variant Attribute</label>
-                                <div className="row">
-                                  <div className="col-lg-10 col-sm-10 col-10">
-                                    <select
-                                      className="form-control variant-select select-option"
-                                      id="colorSelect"
-                                    >
-                                      <option>Choose</option>
-                                      <option>Color</option>
-                                      <option value="red">Red</option>
-                                      <option value="black">Black</option>
-                                    </select>
-                                  </div>
-                                  <div className="col-lg-2 col-sm-2 col-2 ps-0">
-                                    <div className="add-icon tab">
-                                      <Link
-                                        className="btn btn-filter"
-                                        data-bs-toggle="modal"
-                                        data-bs-target="#add-units"
-                                      >
-                                        <PlusCircle className="feather feather-plus-circle" />
-                                      </Link>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              <div
-                                className="selected-hide-color"
-                                id="input-show"
-                              >
-                                <div className="row align-items-center">
-                                  <div className="col-sm-10">
-                                    <div className="input-blocks">
-                                      <input
-                                        className="input-tags form-control"
-                                        id="inputBox"
-                                        type="text"
-                                        data-role="tagsinput"
-                                        name="specialist"
-                                        defaultValue="red, black"
-                                      />
-                                    </div>
-                                  </div>
-                                  <div className="col-lg-2">
-                                    <div className="input-blocks ">
-                                      <Link to="#" className="remove-color">
-                                        <Trash2 />
-                                      </Link>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div
-                            className="modal-body-table variant-table"
-                            id="variant-table"
-                          >
-                            <div className="table-responsive">
-                              <table className="table">
-                                <thead>
-                                  <tr>
-                                    <th>Variantion</th>
-                                    <th>Variant Value</th>
-                                    <th>SKU</th>
-                                    <th>Quantity</th>
-                                    <th>Price</th>
-                                    <th className="no-sort">Action</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  <tr>
-                                    <td>
-                                      <div className="add-product">
-                                        <input
-                                          type="text"
-                                          className="form-control"
-                                          defaultValue="color"
-                                        />
-                                      </div>
-                                    </td>
-                                    <td>
-                                      <div className="add-product">
-                                        <input
-                                          type="text"
-                                          className="form-control"
-                                          defaultValue="red"
-                                        />
-                                      </div>
-                                    </td>
-                                    <td>
-                                      <div className="add-product">
-                                        <input
-                                          type="text"
-                                          className="form-control"
-                                          defaultValue={1234}
-                                        />
-                                      </div>
-                                    </td>
-                                    <td>
-                                      <div className="product-quantity">
-                                        <span className="quantity-btn">
-                                          <i
-                                            data-feather="minus-circle"
-                                            className="feather-search"
-                                          />
-                                        </span>
-                                        <input
-                                          type="text"
-                                          className="quntity-input"
-                                          defaultValue={2}
-                                        />
-                                        <span className="quantity-btn">
-                                          +
-                                          <i
-                                            data-feather="plus-circle"
-                                            className="plus-circle"
-                                          />
-                                        </span>
-                                      </div>
-                                    </td>
-                                    <td>
-                                      <div className="add-product">
-                                        <input
-                                          type="text"
-                                          className="form-control"
-                                          defaultValue={50000}
-                                        />
-                                      </div>
-                                    </td>
-                                    <td className="action-table-data">
-                                      <div className="edit-delete-action">
-                                        <div className="input-block add-lists">
-                                          <label className="checkboxs">
-                                            <input
-                                              type="checkbox"
-                                              defaultChecked=""
-                                            />
-                                            <span className="checkmarks" />
-                                          </label>
-                                        </div>
-                                        <Link
-                                          className="me-2 p-2"
-                                          to="#"
-                                          data-bs-toggle="modal"
-                                          data-bs-target="#add-variation"
-                                        >
-                                          <i
-                                            data-feather="plus"
-                                            className="feather-edit"
-                                          />
-                                        </Link>
-                                        <Link
-                                          className="confirm-text p-2"
-                                          to="#"
-                                        >
-                                          <i
-                                            data-feather="trash-2"
-                                            className="feather-trash-2"
-                                          />
-                                        </Link>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                  <tr>
-                                    <td>
-                                      <div className="add-product">
-                                        <input
-                                          type="text"
-                                          className="form-control"
-                                          defaultValue="color"
-                                        />
-                                      </div>
-                                    </td>
-                                    <td>
-                                      <div className="add-product">
-                                        <input
-                                          type="text"
-                                          className="form-control"
-                                          defaultValue="black"
-                                        />
-                                      </div>
-                                    </td>
-                                    <td>
-                                      <div className="add-product">
-                                        <input
-                                          type="text"
-                                          className="form-control"
-                                          defaultValue={2345}
-                                        />
-                                      </div>
-                                    </td>
-                                    <td>
-                                      <div className="product-quantity">
-                                        <span className="quantity-btn">
-                                          <i
-                                            data-feather="minus-circle"
-                                            className="feather-search"
-                                          />
-                                        </span>
-                                        <input
-                                          type="text"
-                                          className="quntity-input"
-                                          defaultValue={3}
-                                        />
-                                        <span className="quantity-btn">
-                                          +
-                                          <i
-                                            data-feather="plus-circle"
-                                            className="plus-circle"
-                                          />
-                                        </span>
-                                      </div>
-                                    </td>
-                                    <td>
-                                      <div className="add-product">
-                                        <input
-                                          type="text"
-                                          className="form-control"
-                                          defaultValue={50000}
-                                        />
-                                      </div>
-                                    </td>
-                                    <td className="action-table-data">
-                                      <div className="edit-delete-action">
-                                        <div className="input-block add-lists">
-                                          <label className="checkboxs">
-                                            <input
-                                              type="checkbox"
-                                              defaultChecked=""
-                                            />
-                                            <span className="checkmarks" />
-                                          </label>
-                                        </div>
-                                        <Link
-                                          className="me-2 p-2"
-                                          to="#"
-                                          data-bs-toggle="modal"
-                                          data-bs-target="#edit-units"
-                                        >
-                                          <i
-                                            data-feather="plus"
-                                            className="feather-edit"
-                                          />
-                                        </Link>
-                                        <Link
-                                          className="confirm-text p-2"
-                                          to="#"
-                                        >
-                                          <i
-                                            data-feather="trash-2"
-                                            className="feather-trash-2"
-                                          />
-                                        </Link>
-                                      </div>
-                                    </td>
-                                  </tr>
-                                </tbody>
-                              </table>
-                            </div>
-                          </div>
-                        </div> */}
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-              {/* <div className="accordion-card-one accordion" id="accordionExample4">
-                <div className="accordion-item">
-                  <div className="accordion-header" id="headingFour">
-                    <div
-                      className="accordion-button"
-                      data-bs-toggle="collapse"
-                      data-bs-target="#collapseFour"
-                      aria-controls="collapseFour"
-                    >
-                      <div className="text-editor add-list">
-                        <div className="addproduct-icon list">
-                          <h5>
-                            <List className="add-info" />
-                            <span>Custom Fields</span>
-                          </h5>
-                          <Link to="#">
-                            <ChevronDown className="chevron-down-add" />
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div
-                    id="collapseFour"
-                    className="accordion-collapse collapse show"
-                    aria-labelledby="headingFour"
-                    data-bs-parent="#accordionExample4"
-                  >
-                    <div className="accordion-body">
-                      <div className="text-editor add-list add">
-                        <div className="row">
-                          <div className="col-lg-6 col-sm-6 col-12">
-                            <div className="input-blocks">
-                              <label>Manufactured Date</label>
-                              <div className="input-groupicon calender-input">
-                                <Calendar className="info-img" />
-                                <DatePicker
-                                  selected={selectDate}
-                                  onChange={handleDate}
-                                  type="date"
-                                  className="datetimepicker"
-                                  dateFormat="dd-MM-yyyy"
-                                  placeholder="Choose Date"
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div> */}
             </div>
           </div>
           <div className="col-lg-12">
