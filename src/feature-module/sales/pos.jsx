@@ -378,7 +378,7 @@ const Pos = () => {
       };
       let rid = 0;
       try {
-        const mainUrl = "https://poscloud.itmechanix.com/api/SaleInv";
+        const mainUrl = "https://posclouds.itmechanix.com/api/SaleInv";
         await axios.post(mainUrl, temp).then((e) => {
           rid = e.data.receiptNo;
         });

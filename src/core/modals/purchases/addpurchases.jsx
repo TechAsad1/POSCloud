@@ -125,7 +125,7 @@ const AddPurchases = (p) => {
     }
   };
   const handleFormSubmit = async () => {
-    const mainUrl = "https://poscloud.itmechanix.com/api/PurchaseInv";
+    const mainUrl = "https://posclouds.itmechanix.com/api/PurchaseInv";
     if (cartStore.length > 0) {
       if (cart.supplierID === 0) {
         supplierReqAlert();

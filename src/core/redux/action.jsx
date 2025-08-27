@@ -158,7 +158,7 @@ export const setLayoutChange = (payload) => ({
 export const FetchErr = "FetchErr";
 export const FetchLoader = "FetchLoader";
 //Category
-const mainUrl = "https://poscloud.itmechanix.com/api/";
+const mainUrl = "https://posclouds.itmechanix.com/api/";
 const catUrl = mainUrl + "Category";
 export const getCategoryVar = "CategoryList";
 export const getCategory = () => async (dispatch) => {
