@@ -7,6 +7,7 @@ import axios from 'axios';
 import { insertCategory } from "../../redux/action";
 import { Link } from 'react-router-dom'
 import { PlusCircle, X } from 'feather-icons-react/build/IconComponents'
+import { uploadImage } from "../../../helper/helpers";
 
 const AddCategory = (p) => {
   const route = all_routes;
@@ -49,15 +50,6 @@ const AddCategory = (p) => {
       reader.readAsDataURL(e.target.files[0]);
     }
   }
-  const uploadImage = async () => {
-    const url = 'http://localhost:5057/api/Category/uploadImg/file1';
-    const formData = new FormData();
-    formData.append('file', getImgFile);
-    const response = await axios.post(url, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return response.data.message;
-  }
   //Validation
   const validate = () => {
     let tempErrors = {};
@@ -76,7 +68,7 @@ const AddCategory = (p) => {
     if (validate()) {
       const temp = { name: name, desc: name, isActive: true, createdBy: p.userId };
       if (getIsImageChange) {
-        const path = await uploadImage();
+        const path = await uploadImage(getImgFile);
         dispatch(insertCategory(temp, path));
       }
       else {

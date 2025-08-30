@@ -23,7 +23,7 @@ import withReactContent from 'sweetalert2-react-content';
 import Swal from "sweetalert2";
 import "react-datepicker/dist/react-datepicker.css";
 // import { format } from "date-fns";
-import { getImageFromUrl } from "../../helper/helpers";
+import { getImageFromUrl, uploadImage } from "../../helper/helpers";
 
 const EditProduct = () => {
   const route = all_routes;
@@ -295,15 +295,6 @@ const EditProduct = () => {
       reader.readAsDataURL(e.target.files[0]);
     }
   }
-  const uploadImage = async () => {
-    const url = 'https://poscloud.itmechanix.com/api/Product/uploadImg/file1';
-    const formData = new FormData();
-    formData.append('file', getImgFile);
-    const response = await axios.post(url, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return response.data.message;
-  }
   //Validation
   const validate = () => {
     let tempErrors = {};
@@ -356,7 +347,7 @@ const EditProduct = () => {
     e.preventDefault();
     if (validate()) {
       if (getIsImageChange) {
-        const path = await uploadImage();
+        const path = await uploadImage(getImgFile);
         dispatch(updateProduct(id, formData, path));
       }
       else {

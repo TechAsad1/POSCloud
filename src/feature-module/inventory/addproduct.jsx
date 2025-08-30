@@ -20,6 +20,7 @@ import { OverlayTrigger, Tooltip } from "react-bootstrap";
 import axios from "axios";
 import withReactContent from 'sweetalert2-react-content';
 import Swal from "sweetalert2";
+import { uploadImage } from "../../helper/helpers";
 // import { format } from "date-fns";
 
 const AddProduct = () => {
@@ -129,15 +130,15 @@ const AddProduct = () => {
       reader.readAsDataURL(e.target.files[0]);
     }
   }
-  const uploadImage = async () => {
-    const url = 'https://poscloud.itmechanix.com/api/Product/uploadImg/file1';
-    const formData = new FormData();
-    formData.append('file', getImgFile);
-    const response = await axios.post(url, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return response.data.message;
-  }
+  // const uploadImage = async () => {
+  //   const url = 'https://poscloud.itmechanix.com/api/Product/uploadImg/file1';
+  //   const formData = new FormData();
+  //   formData.append('file', getImgFile);
+  //   const response = await axios.post(url, formData, {
+  //     headers: { "Content-Type": "multipart/form-data" },
+  //   });
+  //   return response.data.message;
+  // }
   //Validation
   const validate = () => {
     let tempErrors = {};
@@ -190,7 +191,7 @@ const AddProduct = () => {
     e.preventDefault();
     if (validate()) {
       if (getIsImageChange) {
-        const path = await uploadImage();
+        const path = await uploadImage(getImgFile);
         dispatch(insertProduct(formData, path));
         clearForm(e.target);
       }

@@ -1,3 +1,4 @@
+import axios from "axios";
 import no_image from "../images/no_image.png";
 
 export function dateFormat(_date) {
@@ -27,4 +28,13 @@ export function formatCurrency(amount) {
     style: "currency",
     currency: "PKR",
   }).format(amount);
+}
+export async function uploadImage(getImgFile) {
+  const url = 'https://posclouds.itmechanix.com/api/Product/uploadImg/file1';
+  const formData = new FormData();
+  formData.append('file', getImgFile);
+  const response = await axios.post(url, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return response.data.message;
 }

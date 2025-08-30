@@ -6,6 +6,7 @@ import withReactContent from 'sweetalert2-react-content';
 import Swal from "sweetalert2";
 import { insertCategory } from '../../redux/action';
 import axios from 'axios';
+import { uploadImage } from '../../../helper/helpers';
 
 const AddCategoryList = (p) => {
   const dispatch = useDispatch();
@@ -45,7 +46,7 @@ const AddCategoryList = (p) => {
     e.preventDefault();
     if (validate(e)) {
       if (getIsImageChange) {
-        const path = await uploadImage();
+        const path = await uploadImage(getImgFile);
         dispatch(insertCategory(formData, path));
         clearForm(e.target);
       }
@@ -104,15 +105,6 @@ const AddCategoryList = (p) => {
       };
       reader.readAsDataURL(e.target.files[0]);
     }
-  }
-  const uploadImage = async () => {
-    const url = 'https://poscloud.itmechanix.com/api/Product/uploadImg/file1';
-    const formData = new FormData();
-    formData.append('file', getImgFile);
-    const response = await axios.post(url, formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    return response.data.message;
   }
   const addEmptyCartImg = () => {
     picRef.current.style.backgroundImage = `url(${getImage})`;
