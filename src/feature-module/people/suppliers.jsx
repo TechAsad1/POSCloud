@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Filter, Sliders, User, Globe, Edit, Eye, Trash2 } from "react-feather";
+import { Filter, Sliders, User, Globe, Edit, Trash2 } from "react-feather";
 import ImageWithBasePath from "../../core/img/imagewithbasebath";
 import Select from "react-select";
 import { useDispatch, useSelector } from "react-redux";
@@ -105,9 +105,6 @@ const Suppliers = () => {
         <div className="action-table-data">
           <div className="edit-delete-action">
             <div className="input-block add-lists"></div>
-            <Link className="me-2 p-2" to="#">
-              <Eye className="feather-view" />
-            </Link>
             <Link
               className="me-2 p-2"
               to="#"
@@ -213,7 +210,10 @@ const Suppliers = () => {
     }
   }
   const handleFilter = () => {
-    if (selectSupplier.value > 0 && selectCountry.value === "Choose Country") {
+    if(selectSupplier.value === 0 && selectCountry.value === "Choose Country"){
+      setDataSource(posts);
+    }
+    else if (selectSupplier.value > 0 && selectCountry.value === "Choose Country") {
       setDataSource(posts.filter((x) => x.distributorId === selectSupplier.value));
     }
     else if (selectSupplier.value === 0 && selectCountry.value != "Choose Country") {

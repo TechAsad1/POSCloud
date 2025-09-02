@@ -137,20 +137,20 @@ const SupplierModal = (p) => {
                 <div className="modal-body custom-modal-body">
                   <form onSubmit={handleInsert} ref={formRef}>
                     <div className="row">
-                      <div className="col-lg-4">
+                      <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Supplier Name</label>
                           <input type="text" className="form-control" ref={nameRef} value={formData?.name ?? ""} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                           {errors.name && <p style={{ color: "#ff7676" }}>{errors.name}</p>}
                         </div>
                       </div>
-                      <div className="col-lg-4">
+                      <div className="col-lg-6">
                         <div className="input-blocks">
                           <label>Email</label>
                           <input type="email" className="form-control" value={formData?.email ?? ""} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                         </div>
                       </div>
-                      <div className="col-lg-4">
+                      <div className="col-lg-12">
                         <div className="input-blocks">
                           <label>Phone</label>
                           <input type="text" className="form-control" value={formData?.contact ?? ""} onChange={(e) => setFormData({ ...formData, contact: e.target.value })} />

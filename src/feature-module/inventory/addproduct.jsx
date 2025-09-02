@@ -17,11 +17,9 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { getBrand, getCategory, getUnit, insertProduct, setToogleHeader } from "../../core/redux/action";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
-import axios from "axios";
 import withReactContent from 'sweetalert2-react-content';
 import Swal from "sweetalert2";
 import { uploadImage } from "../../helper/helpers";
-// import { format } from "date-fns";
 
 const AddProduct = () => {
   const route = all_routes;
@@ -631,15 +629,15 @@ const AddProduct = () => {
                           <div className="row">
                             <div className="col-lg-4 col-sm-6 col-12">
                               <div className="input-blocks add-product">
-                                <label>Consumer Price</label>
-                                <input type="number" className="form-control" defaultValue="0" value={formData.consumerPrice} onChange={(e) => change_ConsumerPrice(e.target.value)} />
+                                <label>Purchase Price</label>
+                                <input type="number" className="form-control" defaultValue="0" ref={cPriceRef} onChange={(e) => setFormData({ ...formData, cPrice: e.target.value })} required />
+                                {errors.cPrice && <p className="invalid-feedback">{errors.cPrice}</p>}
                               </div>
                             </div>
                             <div className="col-lg-4 col-sm-6 col-12">
                               <div className="input-blocks add-product">
-                                <label>Purchase Price</label>
-                                <input type="number" className="form-control" defaultValue="0" ref={cPriceRef} onChange={(e) => setFormData({ ...formData, cPrice: e.target.value })} required />
-                                {errors.cPrice && <p className="invalid-feedback">{errors.cPrice}</p>}
+                                <label>Consumer Price</label>
+                                <input type="number" className="form-control" defaultValue="0" value={formData.consumerPrice} onChange={(e) => change_ConsumerPrice(e.target.value)} />
                               </div>
                             </div>
                             <div className="col-lg-4 col-sm-6 col-12">

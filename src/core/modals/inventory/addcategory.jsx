@@ -3,7 +3,6 @@ import { all_routes } from "../../../Router/all_routes";
 import withReactContent from 'sweetalert2-react-content';
 import Swal from "sweetalert2";
 import { useDispatch } from "react-redux";
-import axios from 'axios';
 import { insertCategory } from "../../redux/action";
 import { Link } from 'react-router-dom'
 import { PlusCircle, X } from 'feather-icons-react/build/IconComponents'

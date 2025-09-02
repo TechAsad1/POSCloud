@@ -7,21 +7,27 @@ import { insertUnit } from "../../redux/action";
 const Addunits = (p) => {
   const dispatch = useDispatch();
   const [errors, setErrors] = useState({});
-  const [formData, setFormData] = useState({ name: "", createdBy: p.userId, isActive: true });
+  const [formData, setFormData] = useState({ uom: "", name: "", createdBy: p.userId, isActive: true });
   //Ref
+  const uomRef = useRef();
   const nameRef = useRef();
 
   //Validation
   const validate = () => {
     let tempErrors = {};
-    if (nameRef.current.value === "") {
+    if (uomRef.current.value === "") {
+      tempErrors.uomErr = "UOM short form required";
+      setErrors(tempErrors);
+      uomRef.current.classList.add("is-invalid");
+    }
+    else if (nameRef.current.value === "") {
       tempErrors.name = "Unit name required";
       setErrors(tempErrors);
       nameRef.current.classList.add("is-invalid");
     }
     else {
       nameRef.current.classList.remove("is-invalid");
-      setErrors({ ...errors, name: "" });
+      setErrors({ ...errors, name: "", uomErr: "" });
     }
     return Object.keys(tempErrors).length === 0;
   };
@@ -45,13 +51,13 @@ const Addunits = (p) => {
   };
   //Modal IsVisible
   const handleModalClose = () => {
-    // p.setInsertMode(false);
+    p.setInsertMode(false);
   }
   //Clear
   const clearForm = (e) => {
     nameRef.current.classList.remove("is-invalid");
-    setErrors({ ...errors, name: "" });
-    setFormData({ ...formData, name: "", isActive: true });
+    setErrors({ ...errors, name: "", uomErr: "" });
+    setFormData({ ...formData, name: "", uomErr: "", isActive: true });
     e[0].value = "";
   }
 
@@ -79,6 +85,11 @@ const Addunits = (p) => {
                 </div>
                 <div className="modal-body custom-modal-body">
                   <form onSubmit={handleSubmit}>
+                    <div className="mb-3">
+                      <label className="form-label">UOM Short Form</label>
+                      <input type="text" className="form-control" ref={uomRef} value={formData.uom} onChange={(e) => setFormData({ ...formData, uom: e.target.value })} />
+                      {errors.uomErr && <p style={{ color: "#ff7676" }}>{errors.uomErr}</p>}
+                    </div>
                     <div className="mb-3">
                       <label className="form-label">Unit</label>
                       <input type="text" className="form-control" ref={nameRef} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />

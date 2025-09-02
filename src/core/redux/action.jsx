@@ -267,7 +267,7 @@ export const getUnit = () => async (dispatch) => {
 export const insertUnitVar = "InsertUnit";
 export const insertUnit = (x) => async (dispatch) => {
   try {
-    const temp = { _Name: x.name, desc: x.desc, createdBy: x.createdBy, isActive: x.isActive };
+    const temp = { uom: x.uom, uomname: x.name, uomdesc: x.name, isActive: x.isActive, createdBy: x.createdBy };
     await axios.post(unitUrl, temp).then((e) => {
       dispatch({ type: insertUnitVar, payload: e.data });
     });

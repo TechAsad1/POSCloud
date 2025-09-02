@@ -20,7 +20,7 @@ export function getImageFromUrl(imageName) {
   if (!imageName || imageName.trim() === "") {
     return no_image;
   }
-  return `https://poscloud.itmechanix.com/images/${imageName}`;
+  return `https://posclouds.itmechanix.com/images/${imageName}`;
 }
 
 export function formatCurrency(amount) {

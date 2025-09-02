@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import axios from 'axios';
 import { PlusCircle, X } from "feather-icons-react/build/IconComponents";
 import defImg from "../../../images/no_image.png";
 import { useDispatch, useSelector } from 'react-redux';
 import withReactContent from "sweetalert2-react-content";
 import Swal from "sweetalert2";
 import { updateCategory } from '../../redux/action';
-import { uploadImage } from '../../../helper/helpers';
+import { getImageFromUrl, uploadImage } from '../../../helper/helpers';
 
 const EditCategoryList = (p) => {
     const dispatch = useDispatch();
@@ -23,22 +22,18 @@ const EditCategoryList = (p) => {
     const picRef = useRef();
     useEffect(() => {
         if (p.isEditMode) {
-            getData();
+            const res = postData.find((i) => i.categoryId === Number(p.p));
+            setFormData({ ...formData, imgPath: res.imageName, name: res.categoryName, desc: res.categoryDesc, isActive: res.isActive });
+            if (res.imageName === null)
+                setImage(defImg);
+            else {
+                setImage(getImageFromUrl(res.imageName));
+                setIsImageVisible(true);
+            }
+            setErrors({ ...errors, name: "" });
+            nameRef.current.classList.remove("is-invalid");
         }
     }, [p.isEditMode])
-    const getData = () => {
-        const res = postData.find((i) => i.categoryId === Number(p.p));
-        setFormData({ ...formData, imgPath: res.imageName, name: res.categoryName, desc: res.categoryDesc, isActive: res.isActive });
-        if (res.imageName === null) {
-            setImage(defImg);
-        }
-        else {
-            setImage("https://poscloud.itmechanix.com/api/Category/getImg/" + res.imageName);
-            setIsImageVisible(true);
-        }
-        setErrors({ ...errors, name: "" });
-        nameRef.current.classList.remove("is-invalid");
-    }
     //Validation
     const validate = (p) => {
         let tempErrors = {};

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Filter, Sliders } from "react-feather";
 import ImageWithBasePath from "../../core/img/imagewithbasebath";
 import Select from "react-select";
-import { Edit, Eye, Globe, Trash2, User } from "react-feather";
+import { Edit, Globe, Trash2, User } from "react-feather";
 import { useDispatch, useSelector } from "react-redux";
 import Table from "../../core/pagination/datatable";
 import CustomerModal from "../../core/modals/peoples/customerModal";
@@ -81,11 +81,6 @@ const Customers = () => {
         <div className="action-table-data">
           <div className="edit-delete-action">
             <div className="input-block add-lists"></div>
-
-            <Link className="me-2 p-2" to="#">
-              <Eye className="feather-view" />
-            </Link>
-
             <Link
               className="me-2 p-2"
               to="#"
@@ -217,7 +212,10 @@ const Customers = () => {
     }
   }
   const handleFilter = () => {
-    if (selectCustomer.value > 0 && selectCountry.value === "Choose Country") {
+    if (selectCustomer.value === 0 && selectCountry.value === "Choose Country") {
+      setDataSource(posts);
+    }
+    else if (selectCustomer.value > 0 && selectCountry.value === "Choose Country") {
       setDataSource(posts.filter((x) => x.customerId === selectCustomer.value));
     }
     else if (selectCustomer.value === 0 && selectCountry.value != "Choose Country") {

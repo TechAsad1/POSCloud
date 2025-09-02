@@ -7,24 +7,30 @@ import { insertUnit } from '../../redux/action';
 const AddUnit = (p) => {
     const dispatch = useDispatch();
     const [errors, setErrors] = useState({});
-    const [formData, setFormData] = useState({ name: "", desc: "", createdBy: p.userId, isActive: true });
+    const [formData, setFormData] = useState({ uom: "", name: "", createdBy: p.userId, isActive: true });
     //Ref
+    const uomRef = useRef();
     const nameRef = useRef();
     const formRef = useRef(null);
     useEffect(() => {
         clearForm(formRef.current);
     }, [p.insertMode]);
     //Validation
-    const validate = (p) => {
+    const validate = () => {
         let tempErrors = {};
-        if (p.target[0].value === "") {
-            tempErrors.name = "Unit name is required";
+        if (uomRef.current.value === "") {
+            tempErrors.uomErr = "UOM short form required";
+            setErrors(tempErrors);
+            uomRef.current.classList.add("is-invalid");
+        }
+        else if (nameRef.current.value === "") {
+            tempErrors.name = "Unit name required";
             setErrors(tempErrors);
             nameRef.current.classList.add("is-invalid");
         }
         else {
             nameRef.current.classList.remove("is-invalid");
-            setErrors({ ...errors, name: "" });
+            setErrors({ ...errors, name: "", uomErr: "" });
         }
         return Object.keys(tempErrors).length === 0;
     };
@@ -53,9 +59,22 @@ const AddUnit = (p) => {
     //Clear
     const clearForm = (e) => {
         nameRef.current.classList.remove("is-invalid");
-        setErrors({ ...errors, name: "" });
-        setFormData({ ...formData, name: "", isActive: true });
+        setErrors({ ...errors, name: "", uomErr: "" });
+        setFormData({ ...formData, name: "", uomErr: "", isActive: true });
         e[0].value = "";
+    }
+    const handleUOM = (e) => {
+        if (e.length > 3) {
+            let tempErrors = {};
+            tempErrors.uomErr = "This field required only 3 letters, you can't add more letter's";
+            setErrors(tempErrors);
+            uomRef.current.classList.add("is-invalid");
+        }
+        else {
+            setErrors({ ...errors, uomErr: "" });
+            uomRef.current.classList.remove("is-invalid");
+            setFormData({ ...formData, uom: e })
+        }
     }
     return (
         <div>
@@ -80,6 +99,11 @@ const AddUnit = (p) => {
                                 </div>
                                 <div className="modal-body custom-modal-body">
                                     <form onSubmit={handleSubmit} ref={formRef}>
+                                        <div className="mb-3">
+                                            <label className="form-label">UOM Short Form</label>
+                                            <input type="text" className="form-control" ref={uomRef} value={formData.uom} onChange={(e) => handleUOM(e.target.value)} />
+                                            {errors.uomErr && <p style={{ color: "#ff7676" }}>{errors.uomErr}</p>}
+                                        </div>
                                         <div className="mb-3">
                                             <label className="form-label">Name</label>
                                             <input type="text" className="form-control" ref={nameRef} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />

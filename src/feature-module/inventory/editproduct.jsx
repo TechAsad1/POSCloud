@@ -18,7 +18,6 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { setToogleHeader, updateProduct } from "../../core/redux/action";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
-import axios from "axios";
 import withReactContent from 'sweetalert2-react-content';
 import Swal from "sweetalert2";
 import "react-datepicker/dist/react-datepicker.css";

@@ -303,7 +303,7 @@ const Pos = () => {
   }
   const handleSelectProduct = (e) => {
     removeEmptyCartImg();
-    dispatch(addToSaleCart(productStore.filter((a) => a.id == e.key)));
+    dispatch(addToSaleCart(productStore.filter((a) => a.productId == e.key)));
   }
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("en-PK", {
