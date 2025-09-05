@@ -136,6 +136,7 @@ const AddUsers = (p) => {
         { value: "Salesman", label: "Salesman" },
         { value: "Manager", label: "Manager" },
         { value: "Supervisor", label: "Supervisor" },
+        { value: "SuperAdmin", label: "SuperAdmin" },
         { value: "Store Keeper", label: "Store Keeper" },
         { value: "Purchase", label: "Purchase" },
         { value: "Delivery Biker", label: "Delivery Biker" },

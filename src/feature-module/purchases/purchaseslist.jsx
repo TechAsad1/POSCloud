@@ -30,10 +30,10 @@ const PurchasesList = () => {
   const route = all_routes;
   const columns = [
     {
-      title: "Date",
-      dataIndex: "createdDate",
+      title: "Purchase Date",
+      dataIndex: "purchaseDate",
       render: (txt) => <span>{dateFormat(txt)}</span>,
-      sorter: (a, b) => new Date(a.createdDate) - new Date(b.createdDate),
+      sorter: (a, b) => new Date(a.purchaseDate) - new Date(b.purchaseDate),
     },
     {
       title: "Invoice No#",
@@ -658,8 +658,10 @@ const PurchasesList = () => {
                                     Reference
                                     <br />
                                     Payment Mode
-                                    {/* <br />
-                                    Payment Status */}
+                                    <br />
+                                    Purchase Date
+                                    <br />
+                                    Created Date
                                   </p>
                                 </div>
                                 <div className="details-item"><br />
@@ -668,7 +670,9 @@ const PurchasesList = () => {
                                     <br />
                                     {inv.paymentMode}
                                     <br />
-                                    {/* {inv.paymentStatus} */}
+                                    {dateFormat(inv.purchaseDate)}
+                                    <br />
+                                    {dateFormat(inv.createdDate)}
                                   </p>
                                 </div>
                               </div>

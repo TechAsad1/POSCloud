@@ -5,13 +5,14 @@ import { Link, useNavigate } from "react-router-dom";
 import Select from "react-select";
 import TextEditor from "../../../feature-module/inventory/texteditor";
 import { useDispatch, useSelector } from "react-redux";
-import { addToCart, clearCart, decrementCart, getProduct, getPurchaseInv, getSupplier, incrementCart, insertPurchase, insertTransaction, removeCartRow, rowDiscCart, rowGstCart, rowPriceCart, updateInvID, updatePurchaseInv } from "../../redux/action";
+import { addToCart, changeUnitCartRow, clearCart, decrementCart, getProduct, getPurchaseInv, getSupplier, incrementCart, insertPurchase, insertTransaction, removeCartRow, rowDiscCart, rowGstCart, rowPriceCart, updateInvID, updatePurchaseInv } from "../../redux/action";
 import ImageWithBasePath from "../../img/imagewithbasebath";
 import withReactContent from 'sweetalert2-react-content'
 import Swal from 'sweetalert2'
 import axios from "axios";
-import { formatCurrency } from "../../../helper/helpers";
+// import { formatCurrency } from "../../../helper/helpers";
 import { all_routes } from "../../../Router/all_routes";
+import config from "../../redux/api/config"
 
 
 const AddPurchases = (p) => {
@@ -26,7 +27,7 @@ const AddPurchases = (p) => {
     { value: "Cash", label: "Cash" },
     { value: "Credit", label: "Credit" },
   ];
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
   const handleDateChange = (date) => {
     setSelectedDate(date);
   };
@@ -124,8 +125,9 @@ const AddPurchases = (p) => {
       dispatch(addToCart(productStore.filter((i) => i.clientId === loginUser?.clientId && i.branchId === loginUser?.branchId && i.productId === e)));
     }
   };
+  const url = config.url;
   const handleFormSubmit = async () => {
-    const mainUrl = "https://posclouds.itmechanix.com/api/PurchaseInv";
+    const mainUrl = url + "PurchaseInv";
     if (cartStore.length > 0) {
       if (cart.supplierID === 0) {
         supplierReqAlert();
@@ -147,11 +149,11 @@ const AddPurchases = (p) => {
           gstPerc: cart.gstPerc,
           gst: cart.gst,
           netTotal: cart.netTotal,
+          purchaseDate: selectedDate.$d,
         }
         let rid = 0;
         try {
           await axios.post(mainUrl, insertTemp).then((res) => {
-            console.log(insertTemp);
             rid = res.data.purchaseNo;
             dispatch(getPurchaseInv());
           });
@@ -271,6 +273,22 @@ const AddPurchases = (p) => {
     p.setInsertMode(false);
   }
 
+  const handleRowUOM = (e, id) => {
+    dispatch(changeUnitCartRow(id, e.value));
+  }
+
+  const uomOptions = (min, max) => {
+    if (min === max)
+      return [
+        { value: min, label: min },
+      ]
+    else
+      return [
+        { value: min, label: min },
+        ...(max ? [{ value: max, label: max }] : [])
+      ]
+  }
+
   const navigate = useNavigate();
   const val = localStorage.getItem("userID");
   useEffect(() => {
@@ -330,12 +348,12 @@ const AddPurchases = (p) => {
                         <div className="input-groupicon calender-input">
                           <Calendar className="info-img" />
                           <DatePicker
-                            selected={selectedDate}
-                            onChange={handleDateChange}
-                            type="date"
                             className="filterdatepicker"
                             dateFormat="dd-MM-yyyy"
-                            placeholder="Choose Date"
+                            type="date"
+                            onChange={(e) => handleDateChange(e)}
+                            selected={selectedDate}
+                            placeholder={selectedDate}
                           />
                         </div>
                       </div>
@@ -382,6 +400,7 @@ const AddPurchases = (p) => {
                               <tr>
                                 <th>Product</th>
                                 <th>Qty</th>
+                                <th>Unit</th>
                                 <th>Purchase Rate($)</th>
                                 <th>Gross Amount</th>
                                 <th>Discount(%)</th>
@@ -394,8 +413,8 @@ const AddPurchases = (p) => {
                               </tr>
                             </thead>
                             <tbody>
-                              {cartStore.map((r) => (
-                                <tr key={r.id}>
+                              {cartStore.map((r, index) => (
+                                <tr key={index}>
                                   <td className="p-2">{r.name}</td>
                                   <td>
                                     <div className="product-quantity">
@@ -404,14 +423,23 @@ const AddPurchases = (p) => {
                                       <span className="quantity-btn" onClick={() => dispatch(incrementCart(r.id))}> <PlusCircle /></span>
                                     </div>
                                   </td>
-                                  <td className="p-2"><input type="number" className="form-control" defaultValue={r.price} onChange={(e) => dispatch(rowPriceCart(r.id, e.target.value))} /></td>
-                                  <td className="p-2">{formatCurrency(r.total)}</td>
-                                  <td className="p-2"><input type="number" className="form-control" defaultValue={r.discPerc} onChange={(e) => dispatch(rowDiscCart(r.id, e.target.value))} /></td>
-                                  <td className="p-2">{formatCurrency(r.disc)}</td>
-                                  <td className="p-2"><input type="number" className="form-control" defaultValue={r.gstPerc} onChange={(e) => dispatch(rowGstCart(r.id, e.target.value))} /></td>
-                                  <td className="p-2">{formatCurrency(r.gst)}</td>
-                                  <td className="p-2">{formatCurrency(r.netTotal)}</td>
-                                  <td className="p-2">{formatCurrency(r.costPrice)}</td>
+                                  <td className="p-2">
+                                    <Select
+                                      options={uomOptions(r.minUom, r.maxUom)}
+                                      classNamePrefix="react-select"
+                                      placeholder="Choose Option"
+                                      onChange={(e) => handleRowUOM(e, r.id)}
+                                      value={r.uom ? { value: r.uom, label: r.uom } : null}
+                                    />
+                                  </td>
+                                  <td className="p-2"><input type="number" className="form-control" value={r.price} onChange={(e) => dispatch(rowPriceCart(r.id, e.target.value))} /></td>
+                                  <td className="p-2">{r.total}</td>
+                                  <td className="p-2"><input type="number" className="form-control" value={r.discPerc} onChange={(e) => dispatch(rowDiscCart(r.id, e.target.value))} /></td>
+                                  <td className="p-2">{r.disc}</td>
+                                  <td className="p-2"><input type="number" className="form-control" value={r.gstPerc} onChange={(e) => dispatch(rowGstCart(r.id, e.target.value))} /></td>
+                                  <td className="p-2">{r.gst}</td>
+                                  <td className="p-2">{r.netTotal}</td>
+                                  <td className="p-2">{r.costPrice}</td>
                                   <td>
                                     <Link className="delete-set" onClick={() => showConfirmationAlert(r.id)}><ImageWithBasePath src="assets/img/icons/delete.svg" alt="svg" /></Link>
                                   </td>

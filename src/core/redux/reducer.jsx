@@ -1,4 +1,4 @@
-import { FetchLoader, FetchErr, getCategoryVar, updateCategoryVar, insertCategoryVar, deleteCategoryVar, getBrandVar, insertBrandVar, updateBrandVar, deleteBrandVar, getUnitVar, insertUnitVar, updateUnitVar, deleteUnitVar, getProductVar, insertProductVar, updateProductVar, deleteProductVar, addToCartVar, incrementVar, decrementVar, discountVar, netTotalVar, paymentModeVar, gstVar, getCustomerVar, insertCustomerVar, updateCustomerVar, deleteCustomerVar, clearCartVar, removeCartRowVar, getSaleInvVar, insertSaleInvVar, getPurchaseInvVar, insertPurchaseInvVar, getPurchaseVar, insertPurchaseVar, getSupplierVar, insertSupplierVar, updateSupplierVar, deleteSupplierVar, getClientVar, insertClientVar, updateClientVar, deleteClientVar, getBranchVar, insertBranchVar, updateBranchVar, deleteBranchVar, getUsersVar, insertUsersVar, updateUsersVar, deleteUsersVar, invIDVar, rowDiscVar, updateInvIDVar, deletePurchaseInvVar, getTransactionIDVar, insertSaleVar, getSaleVar, getTransactionVar, insertTransactionVar, rowGstVar, updateSaleInvVar, updatePurchaseInvVar, getPurchaseByIDVar, getSupplierByIdVar, getBranchByIdVar, rowPriceVar, getCustomerByIdVar, getSaleByIDVar, deleteSaleInvVar, getProductByIdVar, getUserByIdVar, getPurchaseInvByIdVar, getTransactionByRIDVar, UpdateCartRowVar, getCategoryByIdVar, getClientByIdVar } from "./action";
+import { FetchLoader, FetchErr, getCategoryVar, updateCategoryVar, insertCategoryVar, deleteCategoryVar, getBrandVar, insertBrandVar, updateBrandVar, deleteBrandVar, getUnitVar, insertUnitVar, updateUnitVar, deleteUnitVar, getProductVar, insertProductVar, updateProductVar, deleteProductVar, addToCartVar, incrementVar, decrementVar, discountVar, netTotalVar, paymentModeVar, gstVar, getCustomerVar, insertCustomerVar, updateCustomerVar, deleteCustomerVar, clearCartVar, removeCartRowVar, getSaleInvVar, insertSaleInvVar, getPurchaseInvVar, insertPurchaseInvVar, getPurchaseVar, insertPurchaseVar, getSupplierVar, insertSupplierVar, updateSupplierVar, deleteSupplierVar, getClientVar, insertClientVar, updateClientVar, deleteClientVar, getBranchVar, insertBranchVar, updateBranchVar, deleteBranchVar, getUsersVar, insertUsersVar, updateUsersVar, deleteUsersVar, invIDVar, rowDiscVar, updateInvIDVar, deletePurchaseInvVar, getTransactionIDVar, insertSaleVar, getSaleVar, getTransactionVar, insertTransactionVar, rowGstVar, updateSaleInvVar, updatePurchaseInvVar, getPurchaseByIDVar, getSupplierByIdVar, getBranchByIdVar, rowPriceVar, getCustomerByIdVar, getSaleByIDVar, deleteSaleInvVar, getProductByIdVar, getUserByIdVar, getPurchaseInvByIdVar, getTransactionByRIDVar, UpdateCartRowVar, getCategoryByIdVar, getClientByIdVar, changeUnitCartRowVar } from "./action";
 import initialState from "./initial.value";
 
 const rootReducer = (state = initialState, action) => {
@@ -88,6 +88,13 @@ const rootReducer = (state = initialState, action) => {
           cart: [...state.cart, { ...action.payload }],
         };
       }
+
+    case changeUnitCartRowVar:
+      return {
+        ...state,
+        cart: calculate("unit", state, action.id, action.unit),
+      };
+
     case removeCartRowVar:
       return {
         ...state,
@@ -128,7 +135,7 @@ const rootReducer = (state = initialState, action) => {
     case rowPriceVar:
       return {
         ...state,
-        cart: state.cart.map((x) => x.id === action.payload ? { ...x, price: action.num, } : x),
+        cart: calculate("price", state, action.payload, action.num),
       };
     case netTotalVar:
       return { ...state, netTotal: action.payload };
@@ -377,6 +384,9 @@ const calculate = (task, state, id, num) => {
   let gstPerc = x[0].gstPerc;
   let discPerc = x[0].discPerc;
   let price = x[0].price;
+  let factor = x[0].factor;
+  let orignalPrice = x[0].orignalPrice;
+  let uom = x[0].uom;
   if (task === "plus") {
     qty = qty + 1;
   }
@@ -391,15 +401,25 @@ const calculate = (task, state, id, num) => {
   else if (task === "price") {
     price = num;
   }
+  else if (task === "unit") {
+    uom = num;
+    if (num === x[0].minUom) {
+      price = orignalPrice / factor;
+    }
+    else {
+      price = orignalPrice;
+    }
+  }
   else {
     discPerc = num;
   }
   let _total = getTotal(qty, price);
   let _netTotal = getNetTotal(_total, discPerc, gstPerc);
-  let _costPrice = getCostPrice(qty, _netTotal);
   const _disc = getDiscAmount(discPerc, _total);
   const _gst = getGstAmount(gstPerc, _total);
-  return state.cart.map((x) => x.id === id ? { ...x, qty: qty, total: _total, price: price, discPerc: discPerc, gstPerc: gstPerc, disc: _disc, gst: _gst, netTotal: _netTotal, costPrice: _costPrice } : x);
+  const _cPrice = getCostPrice(qty, _netTotal);
+  console.log(_netTotal);
+  return state.cart.map((x) => x.id === id ? { ...x, uom: uom, qty: qty, total: _total, price: price, discPerc: discPerc, gstPerc: gstPerc, disc: _disc, gst: _gst, netTotal: _netTotal, costPrice: _cPrice } : x);
 }
 
 export default rootReducer;

@@ -290,63 +290,155 @@ const AddProduct = () => {
     e[15].value = "";
   }
 
+  const toNum = (val) => parseFloat(val) || 0;
 
+  const setDiscount = (num) => {
+    let _discPerc = toNum(formData.discPerc);
+    let _disc = toNum(formData.disc);
+    if (_discPerc > 0)
+      _disc = (num * _discPerc) / 100;
+    else
+      _discPerc = (_disc / num) * 100;
+    setFormData({ ...formData, discPerc: _discPerc });
+    return _disc;
+  }
+  const setGst = (num) => {
+    let _gstPerc = toNum(formData.gstPerc);
+    let _gst = toNum(formData.gst);
+    if (_gstPerc > 0)
+      _gst = (num * _gstPerc) / 100;
+    else
+      _gstPerc = (_gst / num) * 100;
+    setFormData({ ...formData, gstPerc: _gstPerc });
+    return _gst;
+  }
 
-  const change_ConsumerPrice = (val) => {
-    calculate_FormData(val, formData.sPrice, formData.discPerc, formData.disc, formData.gstPerc, formData.gst, false, false, false);
-  }
-  const change_SalePrice = (val) => {
-    calculate_FormData(formData.consumerPrice, val, formData.discPerc, formData.disc, formData.gstPerc, formData.gst, true, false, false);
-  }
-  const change_DiscPerc = (val) => {
-    calculate_FormData(formData.consumerPrice, formData.sPrice, val, formData.disc, formData.gstPerc, formData.gst, false, false, false);
-  }
-  const change_DiscAmount = (val) => {
-    calculate_FormData(formData.consumerPrice, formData.sPrice, formData.discPerc, val, formData.gstPerc, formData.gst, false, true, false);
-  }
-  const change_GstPerc = (val) => {
-    calculate_FormData(formData.consumerPrice, formData.sPrice, formData.discPerc, formData.disc, val, formData.gst, false, false, false);
-  }
-  const change_GstAmount = (val) => {
-    calculate_FormData(formData.consumerPrice, formData.sPrice, formData.discPerc, formData.disc, formData.gstPerc, val, false, false, true);
-  }
-
-
-  const calculate_FormData = (consumerPrice, sPrice, discPerc, disc, gstPerc, gst, isSale, isDisc, isGst) => {
-
-    const toNum = (val) => parseFloat(val) || 0;
-
+  const consumer_KeyDown = (consumerPrice) => {
     let _consumerPrice = toNum(consumerPrice);
-    let _sPrice = toNum(sPrice);
-    let _discPerc = toNum(discPerc);
-    let _disc = toNum(disc);
-    let _gstPerc = toNum(gstPerc);
-    let _gst = toNum(gst);
-
-    let amount = 0;
-
-    if (!isSale)
-      amount = _consumerPrice;
+    let _sPrice = 0;
+    let _disc = 0;
+    let _gst = 0;
+    _disc = setDiscount(_consumerPrice);
+    _gst = setGst(_consumerPrice);
+    _sPrice = _consumerPrice - _disc + _gst;
+    if (_consumerPrice > 0)
+      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _sPrice, disc: _disc, gst: _gst });
     else
-      amount = _sPrice;
+      setFormData({ ...formData, consumerPrice: consumerPrice, sPrice: _sPrice, disc: _disc, gst: _gst });
+  }
 
-    if (isDisc)
-      _discPerc = (_disc / amount) * 100;
-    else
-      _disc = (amount * _discPerc) / 100;
+  const salePrice_KeyDown = (salePrice) => {
+    let _salePrice = toNum(salePrice);
+    let _consumerPrice = 0;
+    let _discPerc = toNum(formData.discPerc);
+    let _gstPerc = toNum(formData.gstPerc);
+    let _disc = toNum(formData.disc);
+    let _gst = toNum(formData.gst);
 
-    if (isGst)
-      _gstPerc = (_gst / amount) * 100;
-    else
-      _gst = (amount * _gstPerc) / 100;
-
-    if (!isSale) {
-      _sPrice = (amount - _disc) + _gst;
-    } else {
-      _consumerPrice = amount + _disc;
+    if (!(_discPerc > 0)) {
+      _disc = setDiscount(_salePrice);
+    }
+    if (!(_gstPerc > 0)) {
+      _gst = setGst(_salePrice);
     }
 
-    setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _sPrice, discPerc: _discPerc, disc: _disc, gstPerc: _gstPerc, gst: _gst });
+    _consumerPrice = _salePrice + _disc + _gst;
+    if (_salePrice > 0)
+      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, disc: _disc, gst: _gst });
+    else
+      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: salePrice, disc: _disc, gst: _gst });
+  }
+
+  const discPerc_KeyDown = (discPerc) => {
+    let _discPerc = toNum(discPerc);
+    let _consumerPrice = toNum(formData.consumerPrice);
+    let _salePrice = toNum(formData.sPrice);
+    let _gst = 0;
+    let _disc = 0;
+
+    if (_consumerPrice > 0) {
+      _disc = (_discPerc * _consumerPrice) / 100;
+      _gst = setGst(_consumerPrice);
+      _salePrice = _consumerPrice - _disc + _gst;
+    }
+    else {
+      _disc = (_discPerc * _salePrice) / 100;
+      _gst = setGst(_salePrice);
+      _consumerPrice = _salePrice + _disc + _gst;
+    }
+    if (_discPerc > 0)
+      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, discPerc: _discPerc, disc: _disc, gst: _gst });
+    else
+      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, discPerc: discPerc, disc: _disc, gst: _gst });
+  }
+
+  const disc_KeyDown = (disc) => {
+    let _disc = toNum(disc);
+    let _consumerPrice = toNum(formData.consumerPrice);
+    let _salePrice = toNum(formData.sPrice);
+    let _gst = 0;
+    let _discPerc = 0;
+
+    if (_consumerPrice > 0) {
+      _discPerc = (_disc / _consumerPrice) * 100;
+      _gst = setGst(_consumerPrice);
+      _salePrice = _consumerPrice - _disc + _gst;
+    }
+    else {
+      _discPerc = (_disc / _salePrice) * 100;
+      _gst = setGst(_salePrice);
+      _consumerPrice = _salePrice + _disc + _gst;
+    }
+    if (_disc > 0)
+      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, discPerc: _discPerc, disc: _disc, gst: _gst });
+    else
+      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, discPerc: _discPerc, disc: disc, gst: _gst });
+  }
+
+  const gstPerc_KeyDown = (gstPerc) => {
+    let _gstPerc = toNum(gstPerc);
+    let _consumerPrice = toNum(formData.consumerPrice);
+    let _salePrice = toNum(formData.sPrice);
+    let _gst = 0;
+    let _disc = 0;
+
+    if (_consumerPrice > 0) {
+      _gst = (_gstPerc * _consumerPrice) / 100;
+      _disc = setDiscount(_consumerPrice);
+      _salePrice = _consumerPrice - _disc + _gst;
+    }
+    else {
+      _gst = (_gstPerc * _salePrice) / 100;
+      _disc = setDiscount(_salePrice);
+      _consumerPrice = _salePrice + _disc + _gst;
+    }
+    if (_gstPerc > 0)
+      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, gstPerc: _gstPerc, disc: _disc, gst: _gst });
+    else
+      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, gstPerc: gstPerc, disc: _disc, gst: _gst });
+  }
+
+  const gst_KeyDown = (gst) => {
+    let _gst = toNum(gst);
+    let _consumerPrice = toNum(formData.consumerPrice);
+    let _salePrice = toNum(formData.sPrice);
+    let _gstPerc = 0;
+    let _disc = 0;
+
+    if (_consumerPrice > 0) {
+      _gstPerc = (_gst / _consumerPrice) * 100;
+      _disc = setDiscount(_consumerPrice);
+      _salePrice = _consumerPrice - _disc + _gst;
+    }
+    else {
+      _gstPerc = (_gst / _salePrice) * 100;
+      _disc = setDiscount(_salePrice);
+      _consumerPrice = _salePrice + _disc + _gst;
+    }
+    if (_gst > 0)
+      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, gstPerc: _gstPerc, disc: _disc, gst: _gst });
+    else
+      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, gstPerc: _gstPerc, disc: _disc, gst: gst });
   }
 
   const navigate = useNavigate();
@@ -637,13 +729,13 @@ const AddProduct = () => {
                             <div className="col-lg-4 col-sm-6 col-12">
                               <div className="input-blocks add-product">
                                 <label>Consumer Price</label>
-                                <input type="number" className="form-control" defaultValue="0" value={formData.consumerPrice} onChange={(e) => change_ConsumerPrice(e.target.value)} />
+                                <input type="number" className="form-control" defaultValue="0" value={formData.consumerPrice} onChange={(e) => consumer_KeyDown(e.target.value)} />
                               </div>
                             </div>
                             <div className="col-lg-4 col-sm-6 col-12">
                               <div className="input-blocks add-product">
                                 <label>Sale Price</label>
-                                <input type="number" className="form-control" defaultValue="0" value={formData.sPrice} ref={sPriceRef} onChange={(e) => change_SalePrice(e.target.value)} required />
+                                <input type="number" className="form-control" defaultValue="0" value={formData.sPrice} ref={sPriceRef} onChange={(e) => salePrice_KeyDown(e.target.value)} required />
                                 {errors.sPrice && <p className="invalid-feedback">{errors.sPrice}</p>}
                               </div>
                             </div>
@@ -652,25 +744,25 @@ const AddProduct = () => {
                             <div className="col-lg-3 col-sm-6 col-12">
                               <div className="input-blocks add-product">
                                 <label>Discount Percent(%)</label>
-                                <input type="number" placeholder="Choose" className="form-control" defaultValue="0" value={formData.discPerc} onChange={(e) => change_DiscPerc(e.target.value)} />
+                                <input type="number" placeholder="Choose" className="form-control" defaultValue="0" value={formData.discPerc} onChange={(e) => discPerc_KeyDown(e.target.value)} />
                               </div>
                             </div>
                             <div className="col-lg-3 col-sm-6 col-12">
                               <div className="input-blocks add-product">
                                 <label>Discount Amount</label>
-                                <input type="number" placeholder="Choose" className="form-control" defaultValue="0" value={formData.disc} onChange={(e) => change_DiscAmount(e.target.value)} />
+                                <input type="number" placeholder="Choose" className="form-control" defaultValue="0" value={formData.disc} onChange={(e) => disc_KeyDown(e.target.value)} />
                               </div>
                             </div>
                             <div className="col-lg-3 col-sm-6 col-12">
                               <div className="input-blocks add-product">
                                 <label>Gst Percent(%)</label>
-                                <input type="number" className="form-control" defaultValue="0" value={formData.gstPerc} onChange={(e) => change_GstPerc(e.target.value)} />
+                                <input type="number" className="form-control" defaultValue="0" value={formData.gstPerc} onChange={(e) => gstPerc_KeyDown(e.target.value)} />
                               </div>
                             </div>
                             <div className="col-lg-3 col-sm-6 col-12">
                               <div className="input-blocks add-product">
                                 <label>Tax(GST) Amount</label>
-                                <input type="number" className="form-control" defaultValue="0" value={formData.gst} onChange={(e) => change_GstAmount(e.target.value)} />
+                                <input type="number" className="form-control" defaultValue="0" value={formData.gst} onChange={(e) => gst_KeyDown(e.target.value)} />
                               </div>
                             </div>
                           </div>

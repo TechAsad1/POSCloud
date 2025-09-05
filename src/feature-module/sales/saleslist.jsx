@@ -836,46 +836,43 @@ const SalesList = () => {
                           }
                           return (<>
                             <form>
+                              <table className="table table-borderless">
+                                <thead>
+                                  <tr>
+                                    <th>Customer Info</th>
+                                    <th>Company Info</th>
+                                    <th>Invoice Info</th>
+                                    <th></th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  <tr>
+                                    <td>{customerName}</td>
+                                    <td><b>Store Name:</b> {singleClient.clientName}</td>
+                                    <td>Reference</td>
+                                    <td>SI/Inv-{inv.receiptNo}</td>
+                                  </tr>
+                                  <tr>
+                                    <td>{contact ? contact : ""}</td>
+                                    <td>{singleBranch.branchName}</td>
+                                    <td>Payment Mode</td>
+                                    <td>{inv.paymentMode}</td>
+                                  </tr>
+                                  <tr>
+                                    <td>{address ? address : ""}</td>
+                                    <td>{singleBranch.contact}</td>
+                                    <td>Receipt Date</td>
+                                    <td>{inv.receiptDate}</td>
+                                  </tr>
+                                  <tr>
+                                    <td></td>
+                                    <td>{singleBranch.address}</td>
+                                    <td></td>
+                                    <td></td>
+                                  </tr>
+                                </tbody>
+                              </table>
                               <div className="invoice-box table-height">
-                                <div className="sales-details-items d-flex">
-                                  <div className="details-item">
-                                    <h6>Customer Info</h6>
-                                    <p>
-                                      {customerName}
-                                      <br />
-                                      {contact}
-                                      <br />
-                                      {address}
-                                    </p>
-                                  </div>
-                                  <div className="details-item">
-                                    <h6>Company Info</h6>
-                                    <p>
-                                      <b>Store Name </b>{singleClient.clientName}
-                                      <br />
-                                      {singleBranch.branchName}
-                                      <br />
-                                      {singleBranch.contact}
-                                      <br />
-                                      {singleBranch.address}
-                                    </p>
-                                  </div>
-                                  <div className="details-item">
-                                    <h6>Invoice Info</h6>
-                                    <p>
-                                      Reference
-                                      <br />
-                                      Payment Mode
-                                    </p>
-                                  </div>
-                                  <div className="details-item">
-                                    <h5>
-                                      <span>SI/Inv-{inv.receiptNo}</span>
-                                      <br />
-                                      {inv.paymentMode}
-                                    </h5>
-                                  </div>
-                                </div>
                                 <h5 className="order-text">Order Summary</h5>
                                 <div className="table-responsive no-pagination">
                                   <table className="table  datanew">

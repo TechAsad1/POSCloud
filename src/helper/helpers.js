@@ -1,5 +1,8 @@
 import axios from "axios";
 import no_image from "../images/no_image.png";
+import config from "../core/redux/api/config";
+
+const mainUrl = config.url;
 
 export function dateFormat(_date) {
   try {
@@ -20,7 +23,7 @@ export function getImageFromUrl(imageName) {
   if (!imageName || imageName.trim() === "") {
     return no_image;
   }
-  return `https://posclouds.itmechanix.com/images/${imageName}`;
+  return config.urlImg + `${imageName}`;
 }
 
 export function formatCurrency(amount) {
@@ -30,7 +33,7 @@ export function formatCurrency(amount) {
   }).format(amount);
 }
 export async function uploadImage(getImgFile) {
-  const url = 'https://posclouds.itmechanix.com/api/Product/uploadImg/file1';
+  const url = mainUrl + 'Product/uploadImg/file1';
   const formData = new FormData();
   formData.append('file', getImgFile);
   const response = await axios.post(url, formData, {

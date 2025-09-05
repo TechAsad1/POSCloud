@@ -21,6 +21,7 @@ import { getImageFromUrl } from '../../helper/helpers'
 import axios from 'axios'
 import { all_routes } from '../../Router/all_routes'
 import "./pos.css";
+import config from '../../core/redux/api/config'
 
 const Pos = () => {
 
@@ -166,7 +167,6 @@ const Pos = () => {
   const cardInputRef = useRef();
   const closeUpdateProBtn = useRef();
   const [errors, setErrors] = useState({});
-  const [editProID, setEditProID] = useState(0);
 
 
   useEffect(() => {
@@ -224,78 +224,6 @@ const Pos = () => {
     let _netTotal = (_total + _gst) - dis;
     setCart({ ...cart, total: _total, netTotal: _netTotal, disc: dis, gst: _gst });
   }
-
-  //Update Product
-  //UpdatePro
-  const [updatePro, setUpdatePro] = useState({ _selectedUnit: "Choose Option", gstPerc: 0, gst: 0, discPerc: 0, disc: 0, _price: 0, qty: 0, total: 0 });
-
-  const [unitList, setUnitList] = useState([]);
-  const [selectUnit, setSelectedUnit] = useState([]);
-
-  const handleSelectedUnit = (e) => {
-    var x = cartStore.find((x) => x.id === editProID);
-    if (x != null) {
-      if (e.value != "Choose Option") {
-        setSelectedUnit([{ value: e.value, label: e.label }])
-        if (e.value === x.minUom) {
-          //Pcs
-          let _singlePrice = x.price / x.factor;
-          let _total = _singlePrice * x.qty;
-          let _gst = _total * updatePro.gstPerc / 100;
-          let _disc = _total * updatePro.discPerc / 100;
-          _total -= _disc;
-          _total += _gst;
-          setUpdatePro({ ...updatePro, _selectedUnit: e.value, _price: _singlePrice, total: _total, gst: _gst, disc: _disc });
-        }
-        else {
-          //Box
-          let _total = x.price * x.qty;
-          let _gst = _total * updatePro.gstPerc / 100;
-          let _disc = _total * updatePro.discPerc / 100;
-          _total -= _disc;
-          _total += _gst;
-          setUpdatePro({ ...updatePro, _selectedUnit: e.value, _price: x.price, total: _total, gst: _gst, disc: _disc });
-        }
-      }
-    }
-  }
-
-  useEffect(() => {
-    if (unitList.length > 1)
-      setSelectedUnit(unitList[1]);
-    else
-      setSelectedUnit(unitList[0]);
-  }, [unitList[0]]);
-
-  const handleEditProductByID = (e) => {
-    setEditProID(e);
-    const x = cartStore.filter((i) => i.id === e);
-    if (!x) return;
-    setUnitList([]);
-    const units = [{ value: x[0].minUom, label: x[0].minUom }];
-    if (x[0].minUom != x[0].maxUom)
-      units.push({ value: x[0].maxUom, label: x[0].maxUom });
-    setUnitList(units);
-    setUpdatePro({ ...updatePro, _selectedUnit: x[0].selectedUnit, qty: x[0].qty, _price: x[0].price, total: (x[0].total - x[0].disc) + x[0].gst, discPerc: x[0].discPerc, disc: x[0].disc, gstPerc: x[0].gstPerc, gst: x[0].gst });
-  }
-  const calculateGst_Edit = (perc, total) => {
-    let _total = total - updatePro.disc;
-    let _gst = _total * perc / 100;
-    setUpdatePro({ ...updatePro, total: _total + _gst, gstPerc: perc, gst: _gst });
-  }
-  const calculateDisc_Edit = (perc, total) => {
-    let _total = total;
-    let _disc = _total * perc / 100;
-    setUpdatePro({ ...updatePro, total: (_total - _disc) + updatePro.gst, discPerc: perc, disc: _disc });
-  }
-  const updatePro_Click = (e) => {
-    e.preventDefault();
-    if (selectUnit?.value != null) {
-      dispatch(updateCartRow(editProID, selectUnit?.value, updatePro._price, updatePro.gstPerc, updatePro.gst, updatePro.discPerc, updatePro.disc, updatePro._price * updatePro.qty, updatePro.total));
-    }
-    closeUpdateProBtn.current.click();
-  }
-  //Update Product End
   //AddToCart
   const handleAddToCart = (e) => {
     removeEmptyCartImg();
@@ -359,6 +287,7 @@ const Pos = () => {
   const removeEmptyCartImg = () => {
     cartDivRef.current.style.backgroundImage = "none";
   }
+  const url = config.url;
   const insertInv = async (isHold) => {
     if (cartStore.length > 0) {
       const temp = {
@@ -378,7 +307,7 @@ const Pos = () => {
       };
       let rid = 0;
       try {
-        const mainUrl = "https://posclouds.itmechanix.com/api/SaleInv";
+        const mainUrl = url + "SaleInv";
         await axios.post(mainUrl, temp).then((e) => {
           rid = e.data.receiptNo;
         });
@@ -515,6 +444,74 @@ const Pos = () => {
   const handlePrintBtn = useReactToPrint({
     content: () => receiptRef.current,
   });
+
+
+  //Update Product
+  const [editProID, setEditProID] = useState(0);
+  const [updatePro, setUpdatePro] = useState({ gstPerc: 0, gst: 0, discPerc: 0, disc: 0, _price: 0, qty: 0, total: 0 });
+  const [unitList, setUnitList] = useState([]);
+  const [selectUnit, setSelectedUnit] = useState([]);
+  const handleSelectedUnit = (e) => {
+    var x = cartStore.find((x) => x.id === editProID);
+    if (!x) return;
+    setSelectedUnit([{ value: e.value, label: e.label }])
+    if (e.value === x.minUom) {
+      //Pcs
+      let _singlePrice = x.price / x.factor;
+      let _total = _singlePrice * x.qty;
+      let _gst = _total * updatePro.gstPerc / 100;
+      let _disc = _total * updatePro.discPerc / 100;
+      _total -= _disc;
+      _total += _gst;
+      setUpdatePro({ ...updatePro, _selectedUnit: e.value, _price: _singlePrice, total: _total, gst: _gst, disc: _disc });
+    }
+    else {
+      //Box
+      let _total = x.price * x.qty;
+      let _gst = _total * updatePro.gstPerc / 100;
+      let _disc = _total * updatePro.discPerc / 100;
+      _total -= _disc;
+      _total += _gst;
+      setUpdatePro({ ...updatePro, _selectedUnit: e.value, _price: x.price, total: _total, gst: _gst, disc: _disc });
+    }
+  }
+  useEffect(() => {
+    if (unitList.length === 1)
+      setSelectedUnit(unitList[0]);
+    else
+      setSelectedUnit(unitList[1]);
+  }, [unitList[0]]);
+  const handleEditProductByID = (e) => {
+    setEditProID(e);
+    const x = cartStore.filter((i) => i.id === e);
+    if (!x) return;
+    setUnitList([]);
+    let units = [];
+    if (x[0].minUom === x[0].maxUom)
+      units = [{ value: x[0].minUom, label: x[0].minUom }];
+    else {
+      units = [{ value: x[0].minUom, label: x[0].minUom },
+      ...(x[0].maxUom ? [{ value: x[0].maxUom, label: x[0].maxUom }] : [])];
+    }
+    setUnitList(units);
+    setUpdatePro({ ...updatePro, qty: x[0].qty, _price: x[0].price, total: (x[0].total - x[0].disc) + x[0].gst, discPerc: x[0].discPerc, disc: x[0].disc, gstPerc: x[0].gstPerc, gst: x[0].gst });
+  }
+  const calculateGst_Edit = (perc, total) => {
+    let _total = total - updatePro.disc;
+    let _gst = _total * perc / 100;
+    setUpdatePro({ ...updatePro, total: _total + _gst, gstPerc: perc, gst: _gst });
+  }
+  const calculateDisc_Edit = (perc, total) => {
+    let _total = total;
+    let _disc = _total * perc / 100;
+    setUpdatePro({ ...updatePro, total: (_total - _disc) + updatePro.gst, discPerc: perc, disc: _disc });
+  }
+  const updatePro_Click = (e) => {
+    e.preventDefault();
+    dispatch(updateCartRow(editProID, selectUnit?.value, updatePro._price, updatePro.gstPerc, updatePro.gst, updatePro.discPerc, updatePro.disc, updatePro._price * updatePro.qty, updatePro.total));
+    closeUpdateProBtn.current.click();
+  }
+  //Update Product End
 
   const navigate = useNavigate();
   const val = localStorage.getItem("userID");
@@ -1402,12 +1399,11 @@ const Pos = () => {
                             <Select
                               classNamePrefix="react-select"
                               options={unitList}
-                              onChange={handleSelectedUnit}
+                              onChange={(e) => handleSelectedUnit(e)}
                               value={selectUnit}
                             />
                           </div>
                         </div>
-
                         <div className="col-lg-6 col-sm-12 col-12">
                           <div className="input-blocks add-product">
                             <label>

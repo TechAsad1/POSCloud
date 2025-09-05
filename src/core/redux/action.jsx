@@ -1,4 +1,5 @@
 import axios from "axios";
+import config from "./api/config";
 //import moment from "moment";
 export const product_list = () => ({ type: "Product_list" });
 export const set_product_list = (payload) => ({
@@ -158,7 +159,7 @@ export const setLayoutChange = (payload) => ({
 export const FetchErr = "FetchErr";
 export const FetchLoader = "FetchLoader";
 //Category
-const mainUrl = "https://posclouds.itmechanix.com/api/";
+const mainUrl = config.url;
 const catUrl = mainUrl + "Category";
 export const getCategoryVar = "CategoryList";
 export const getCategory = () => async (dispatch) => {
@@ -350,17 +351,27 @@ export const deleteProduct = (id) => async (dispatch) => {
 //Cart
 export const addToCartVar = "AddToCart";
 export const addToCart = (row) => (dispatch) => {
+  let uom = "";
   row.map((x) => {
-    const temp = { id: x.productId, img: x.imageName, name: x.productName, uom: x.minUom, factor: x.factor, qty: 1, gstPerc: 0, gst: 0, discPerc: 0, disc: 0, price: x.purchasePrice, total: x.purchasePrice, netTotal: x.purchasePrice, costPrice: x.purchasePrice };
+    if (x.maxUom)
+      uom = x.maxUom;
+    else
+      uom = x.minUom;
+    const temp = { id: x.productId, img: x.imageName, name: x.productName, minUom: x.minUom, maxUom: x.maxUom, uom: uom, factor: x.factor, qty: 1, gstPerc: 0, gst: 0, discPerc: 0, disc: 0, price: x.purchasePrice, total: x.purchasePrice, netTotal: x.purchasePrice, orignalPrice: x.purchasePrice, costPrice: x.purchasePrice };
     dispatch({ type: addToCartVar, payload: temp });
   });
 };
 export const addToSaleCart = (row) => (dispatch) => {
   row.map((x) => {
-    const temp = { id: x.productId, img: x.imageName, name: x.productName, minUom: x.minUom, maxUom: x.maxUom, factor: x.factor, qty: 1, gstPerc: 0, gst: 0, discPerc: 0, disc: 0, price: x.salePrice, total: x.salePrice, netTotal: x.salePrice };
+    const temp = { id: x.productId, img: x.imageName, name: x.productName, minUom: x.minUom, maxUom: x.maxUom, uom: x.minUom, factor: x.factor, qty: 1, gstPerc: 0, gst: 0, discPerc: 0, disc: 0, price: x.salePrice, total: x.salePrice, netTotal: x.salePrice, orignalPrice: x.purchasePrice, costPrice: 0 };
     dispatch({ type: addToCartVar, payload: temp });
   });
 };
+
+export const changeUnitCartRowVar = "ChangeUnitCartRow";
+export const changeUnitCartRow = (_id, _unit) => (dispatch) => {
+  dispatch({ type: changeUnitCartRowVar, id: _id, unit: _unit });
+}
 
 export const removeCartRowVar = "RemoveCartRow";
 export const removeCartRow = (id) => (dispatch) => {
@@ -728,7 +739,7 @@ export const getTransactionByRID = (id, acc) => async (dispatch) => {
   }
 };
 //Client
-const clientUrl = mainUrl + "Client";
+const clientUrl = "http://localhost:5057/api/" + "Client";
 export const getClientVar = "ClientList";
 export const getClient = () => async (dispatch) => {
   dispatch({ type: FetchLoader });
@@ -749,9 +760,9 @@ export const getClientById = (id) => async (dispatch) => {
   }
 };
 export const insertClientVar = "InsertClient";
-export const insertClient = (x) => async (dispatch) => {
+export const insertClient = (x, path) => async (dispatch) => {
   try {
-    const temp = { _Name: x.name, email: x.email, contact: x.contact, address: x.address, city: x.city, country: x.country, createdBy: x.createdBy };
+    const temp = { _Name: x.name, Desc: x.name, imageName: path, email: x.email, contact: x.contact, address: x.address, city: x.city, country: x.country, createdBy: x.createdBy };
     await axios.post(clientUrl, temp).then((e) => {
       dispatch({ type: insertClientVar, payload: e.data });
     });
@@ -760,9 +771,9 @@ export const insertClient = (x) => async (dispatch) => {
   }
 };
 export const updateClientVar = "UpdateClient";
-export const updateClient = (id, x) => async (dispatch) => {
+export const updateClient = (id, x, path) => async (dispatch) => {
   try {
-    const temp = { _Name: x.name, email: x.email, contact: x.contact, address: x.address, city: x.city, country: x.country, createdBy: 1 };
+    const temp = { _Name: x.name, imageName: path, email: x.email, contact: x.contact, address: x.address, city: x.city, country: x.country, createdBy: 1 };
     const response = await axios.put(clientUrl + `/${id}`, temp);
     dispatch({ type: updateClientVar, payload: response.data });
   } catch (error) {
@@ -780,7 +791,7 @@ export const deleteClient = (id) => async (dispatch) => {
   }
 };
 //Branch
-const branchUrl = mainUrl + "Branch";
+const branchUrl = "http://localhost:5057/api/" + "Branch";
 export const getBranchVar = "BranchList";
 export const getBranch = () => async (dispatch) => {
   dispatch({ type: FetchLoader });

@@ -3,10 +3,10 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom'
 import Select from 'react-select'
-import { getUserById, updateUsers } from '../../redux/action';
+import { updateUsers } from '../../redux/action';
 import withReactContent from 'sweetalert2-react-content';
 import Swal from "sweetalert2";
-import axios from 'axios';
+import { getImageFromUrl, uploadImage } from '../../../helper/helpers';
 
 const EditUser = (p) => {
     const role = [
@@ -16,6 +16,7 @@ const EditUser = (p) => {
         { value: "Salesman", label: "Salesman" },
         { value: "Manager", label: "Manager" },
         { value: "Supervisor", label: "Supervisor" },
+        { value: "SuperAdmin", label: "SuperAdmin" },
         { value: "Store Keeper", label: "Store Keeper" },
         { value: "Purchase", label: "Purchase" },
         { value: "Delivery Biker", label: "Delivery Biker" },
@@ -24,7 +25,7 @@ const EditUser = (p) => {
         { value: "Accountant", label: "Accountant" },
     ];
     const dispatch = useDispatch();
-    const singleUser = useSelector((state) => state.singleUser);
+    const users = useSelector((state) => state.users);
     const [getImage, setImage] = useState();
     const [errors, setErrors] = useState({});
     const [getImgFile, setImgFile] = useState(null);
@@ -37,36 +38,32 @@ const EditUser = (p) => {
     const picRef = useRef();
     const nameRef = useRef();
     useEffect(() => {
-        if (p.isEditMode) {
-            dispatch(getUserById(p.id));
-        }
-    }, [p.isEditMode]);
-    useEffect(() => {
         addEmptyCartImg();
     }, [getImage]);
     useEffect(() => {
         if (p.isEditMode) {
+            const x = users.find((i) => i.userId === p.id);
             setFormData({
                 ...formData,
-                name: singleUser.name,
-                imgPath: singleUser.img,
-                userRole: singleUser.userRole,
-                email: singleUser.email,
-                password: singleUser.password,
-                rePassword: singleUser.password,
-                contact: singleUser.contact
+                name: x.userName,
+                imgPath: x.img,
+                userRole: x.userRole,
+                email: x.loginId,
+                password: x.passwords,
+                rePassword: x.passwords,
+                contact: x.contact
             });
-            if (singleUser.img === "" || singleUser.img === null) {
+            if (x.img === "" || x.img === null) {
                 setIsImageVisible(false);
                 setImage("");
             }
             else {
-                setImage((singleUser.img === null || singleUser.img === "") ? "" : "https://localhost:7151/api/User/getImg/" + singleUser.img);
+                setImage(getImageFromUrl(x.img));
                 setIsImageVisible(true);
             }
-            handleSelectRole(singleUser.userRole);
+            handleSelectRole(x.userRole);
         }
-    }, [singleUser]);
+    }, [p.isEditMode, users]);
 
     //Image
     const handleRemoveProduct = () => {
@@ -94,16 +91,6 @@ const EditUser = (p) => {
             reader.readAsDataURL(e.target.files[0]);
         }
     }
-    const uploadImage = async () => {
-        const url = 'https://localhost:7151/api/User/uploadImg/file1';
-        const formData = new FormData();
-        formData.append('file', getImgFile);
-        const response = await axios.post(url, formData, {
-            headers: { "Content-Type": "multipart/form-data" },
-        });
-        return response.data.message;
-        // console.log(`Upload successful! Image URL: ${response.data.message}`);
-    }
     const addEmptyCartImg = () => {
         picRef.current.style.backgroundImage = `url(${getImage})`;
         picRef.current.style.backgroundSize = "cover";
@@ -117,30 +104,29 @@ const EditUser = (p) => {
     const validate = (p) => {
         let tempErrors = {};
         if (p.target[1].value === "") {
-            tempErrors.name = "UserName required";
+            tempErrors.nameErr = "UserName required";
             nameRef.current.classList.add("is-invalid");
             setErrors(tempErrors);
         }
         else if (formData.userRole === "") {
-            tempErrors.role = "UserRole required";
+            tempErrors.roleErr = "UserRole required";
             nameRef.current.classList.remove("is-invalid");
             setErrors(tempErrors);
         }
         else if (p.target[5].value === "") {
-            tempErrors.password = "Password required";
+            tempErrors.passwordErr = "Password required";
             setErrors(tempErrors);
         }
         else if (p.target[6].value === "") {
-            tempErrors.rePassword = "Confirm password required";
+            tempErrors.rePasswordErr = "Confirm password required";
             setErrors(tempErrors);
         }
         else if (p.target[5].value != p.target[6].value) {
-            tempErrors.rePassword = "Confirm password does not match!";
+            tempErrors.rePasswordErr = "Confirm password does not match!";
             setErrors(tempErrors);
         }
-        else {
-            setErrors({ ...errors, name: "", password: "", rePassword: "", role: "" });
-        }
+        else
+            setErrors({ ...errors, nameErr: "", passwordErr: "", rePasswordErr: "", roleErr: "" });
         return Object.keys(tempErrors).length === 0;
     };
     //Submit
@@ -148,7 +134,7 @@ const EditUser = (p) => {
         e.preventDefault();
         if (validate(e)) {
             if (getIsImageChange) {
-                const path = await uploadImage();
+                const path = await uploadImage(getImgFile);
                 dispatch(updateUsers(p.id, formData, path));
             }
             else {
@@ -246,20 +232,20 @@ const EditUser = (p) => {
                                             <div className="col-lg-6">
                                                 <div className="input-blocks">
                                                     <label>User Name</label>
-                                                    <input type="text" className="form-control" ref={nameRef} defaultValue={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-                                                    {errors.name && <p style={{ color: "#ff7676" }}>{errors.name}</p>}
+                                                    <input type="text" readOnly className={"form-control " + (errors.nameErr ? "is-invalid" : "")} ref={nameRef} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                                                    {errors.nameErr && <p style={{ color: "#ff7676" }}>{errors.nameErr}</p>}
                                                 </div>
                                             </div>
                                             <div className="col-lg-6">
                                                 <div className="input-blocks">
                                                     <label>Phone</label>
-                                                    <input type="text" className="form-control" defaultValue={formData.contact} onChange={(e) => setFormData({ ...formData, contact: e.target.value })} />
+                                                    <input type="text" readOnly className="form-control" value={formData.contact} onChange={(e) => setFormData({ ...formData, contact: e.target.value })} />
                                                 </div>
                                             </div>
                                             <div className="col-lg-6">
                                                 <div className="input-blocks">
                                                     <label>Email</label>
-                                                    <input type="email" className="form-control" defaultValue={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                                                    <input type="email" readOnly className="form-control" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
                                                 </div>
                                             </div>
                                             <div className="col-lg-6">
@@ -271,8 +257,9 @@ const EditUser = (p) => {
                                                         placeholder={formData.userRole}
                                                         onChange={(e) => handleSelectRole(e.value)}
                                                         value={selectUserRole}
+                                                        isDisabled
                                                     />
-                                                    {errors.role && <p style={{ color: "#ff7676" }}>{errors.role}</p>}
+                                                    {errors.roleErr && <p style={{ color: "#ff7676" }}>{errors.roleErr}</p>}
                                                 </div>
                                             </div>
                                             <div className="col-lg-6">
@@ -281,9 +268,9 @@ const EditUser = (p) => {
                                                     <div className="pass-group">
                                                         <input
                                                             type={showPassword ? 'text' : 'password'}
-                                                            className="pass-input"
+                                                            className={"pass-input " + (errors.nameErr ? "is-invalid" : "")}
                                                             placeholder="Enter your password"
-                                                            defaultValue={formData.password}
+                                                            value={formData.password}
                                                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                                                         />
                                                         <span
@@ -291,7 +278,7 @@ const EditUser = (p) => {
                                                             onClick={handleTogglePassword}
                                                         />
                                                     </div>
-                                                    {errors.password && <p style={{ color: "#ff7676" }}>{errors.password}</p>}
+                                                    {errors.passwordErr && <p style={{ color: "#ff7676" }}>{errors.passwordErr}</p>}
                                                 </div>
                                             </div>
                                             <div className="col-lg-6">
@@ -300,9 +287,9 @@ const EditUser = (p) => {
                                                     <div className="pass-group">
                                                         <input
                                                             type={showConfirmPassword ? 'text' : 'password'}
-                                                            className="pass-input"
+                                                            className={"pass-input " + (errors.nameErr ? "is-invalid" : "")}
                                                             placeholder="Enter your password"
-                                                            defaultValue={formData.rePassword}
+                                                            value={formData.rePassword}
                                                             onChange={(e) => setFormData({ ...formData, rePassword: e.target.value })}
                                                         />
                                                         <span
@@ -310,7 +297,7 @@ const EditUser = (p) => {
                                                             onClick={handleToggleConfirmPassword}
                                                         />
                                                     </div>
-                                                    {errors.rePassword && <p style={{ color: "#ff7676" }}>{errors.rePassword}</p>}
+                                                    {errors.rePasswordErr && <p style={{ color: "#ff7676" }}>{errors.rePasswordErr}</p>}
                                                 </div>
                                             </div>
                                         </div>

@@ -70,7 +70,6 @@ const Signin = () => {
       navigate(from, { replace: true });
     }
   }
-  console.log(posts);
   return (
     <div className="main-wrapper">
       <div className="account-content">

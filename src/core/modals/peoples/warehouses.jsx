@@ -229,7 +229,7 @@ const WareHouses = () => {
 
   const [invID, setInvID] = useState(0);
   const [editMode, setEditMode] = useState(false);
-  const clientStore1 = useSelector((state) => state.posts);
+  const clientStore1 = useSelector((state) => state.clients);
   const [clients, setClients] = useState([{ value: 0, label: "Choose Client Name" }]);
   const [formData, setFormData] = useState({ clientID: 1, name: "", email: "", contact: "", address: "", state: "", zipCode: "", city: "", country: "", createdBy: loginUser?.userId });
   const [errors, setErrors] = useState({});
@@ -240,7 +240,7 @@ const WareHouses = () => {
 
   useEffect(() => {
     if (loginUser) {
-      const filtered = clientStore1.filter(
+      const filtered = posts1.filter(
         (i) =>
           i.clientId === loginUser.clientId &&
           i.branchId === loginUser.branchId
@@ -250,14 +250,20 @@ const WareHouses = () => {
       setPosts([]);
   }, [loginUser, clientStore1]);
 
+
+  useEffect(() => {
+    setPosts(clientStore1);
+  }, [loginUser, clientStore1]);
+
   const [selectClient, setSelectClient] = useState(clients[0]);
   const handleSelectClient = (e) => {
-    setSelectClient(clients.find((x) => x.value === e));
+    const selected = clients.find((x) => x.value === e);
+    setSelectClient(selected);
     if (e === 0) {
       setFormData({ ...formData, clientID: 0, clientName: "" });
     }
     else {
-      setFormData({ ...formData, clientID: e, clientName: selectClient.label });
+      setFormData({ ...formData, clientID: e, clientName: selected.label });
     }
   }
   useEffect(() => {
@@ -385,7 +391,7 @@ const WareHouses = () => {
   }, [users, navigate]);
   if (!loginUser)
     return null;
-  
+
   return (
     <div className="page-wrapper">
       <div className="content">
