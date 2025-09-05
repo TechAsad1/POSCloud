@@ -441,6 +441,7 @@ const AddProduct = () => {
       setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, gstPerc: _gstPerc, disc: _disc, gst: gst });
   }
 
+  console.log("!");
   const navigate = useNavigate();
   const val = localStorage.getItem("userID");
   useEffect(() => {
@@ -491,6 +492,7 @@ const AddProduct = () => {
             </li>
           </ul>
         </div>
+        <span>!</span>
         {/* /add */}
         <form onSubmit={handleSubmit} className="needs-validation">
           <div className="card">
