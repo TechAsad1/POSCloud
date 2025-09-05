@@ -18,11 +18,11 @@ const AddStore = (p) => {
     const [getImgFile, setImgFile] = useState(null);
     const [getIsImageChange, setIsImageChange] = useState(false);
 
-    const [loginUser, setLoginUser] = useState(null);
+    // const [loginUser, setLoginUser] = useState(null);
     const [names, setNames] = useState([]);
 
     // loginUser?.userId
-    const [formData, setFormData] = useState({ name: "", email: "", contact: "", address: "", city: "", country: "", createdBy: loginUser?.userId });
+    const [formData, setFormData] = useState({ name: "", email: "", contact: "", address: "", city: "", country: "", createdBy: 1 });
     const [errors, setErrors] = useState({});
     //Ref
     const nameRef = useRef();

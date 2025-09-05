@@ -12,7 +12,6 @@ const Header = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const user = useSelector((state) => state.singleUser);
 
-  console.log(user);
   const isElementVisible = (element) => {
     return element.offsetWidth > 0 || element.offsetHeight > 0;
   };

@@ -185,11 +185,11 @@ const WareHouses = () => {
   const searchEngine = (action, key) => {
     if (action === "newest") {
       setDataSource(branches.sort((a, b) => a.branchId - b.branchId)
-        .slice(0, branches.length));
+        .slice(0, branches.length).map((item) => ({ ...item, key: item.branchId, })));
     }
     else if (action === "oldest") {
       setDataSource(branches.sort((a, b) => b.branchId - a.branchId)
-        .slice(0, branches.length));
+        .slice(0, branches.length).map((item) => ({ ...item, key: item.branchId, })));
     }
     else if (action === "filter") {
       handleFilter();
@@ -201,18 +201,18 @@ const WareHouses = () => {
             typeof value === "string" &&
             value.toLowerCase().includes(key.toLowerCase())
         )
-      ));
+      ).map((item) => ({ ...item, key: item.branchId, })));
     }
   }
   const handleFilter = () => {
     if (selectBranch.value > 0 && selectCountry.value === "Choose Country") {
-      setDataSource(branches.filter((x) => x.branchId === selectBranch.value));
+      setDataSource(branches.filter((x) => x.branchId === selectBranch.value).map((item) => ({ ...item, key: item.branchId, })));
     }
     else if (selectBranch.value === 0 && selectCountry.value != "Choose Country") {
-      setDataSource(branches.filter((x) => x.country === selectCountry.value));
+      setDataSource(branches.filter((x) => x.country === selectCountry.value).map((item) => ({ ...item, key: item.branchId, })));
     }
     else {
-      setDataSource(branches.filter((x) => x.branchId === selectBranch.value && x.country === selectCountry.value));
+      setDataSource(branches.filter((x) => x.branchId === selectBranch.value && x.country === selectCountry.value).map((item) => ({ ...item, key: item.branchId, })));
     }
   }
   //Set Select DropDown
@@ -238,17 +238,17 @@ const WareHouses = () => {
   const nameRef2 = useRef();
   const formRef = useRef(null);
 
-  useEffect(() => {
-    if (loginUser) {
-      const filtered = posts1.filter(
-        (i) =>
-          i.clientId === loginUser.clientId &&
-          i.branchId === loginUser.branchId
-      );
-      setPosts(filtered);
-    } else
-      setPosts([]);
-  }, [loginUser, clientStore1]);
+  // useEffect(() => {
+  //   if (loginUser) {
+  //     const filtered = branches.filter(
+  //       (i) =>
+  //         i.clientId === loginUser.clientId &&
+  //         i.branchId === loginUser.branchId
+  //     );
+  //     setPosts(filtered);
+  //   } else
+  //     setPosts([]);
+  // }, [loginUser, clientStore1]);
 
 
   useEffect(() => {
@@ -378,7 +378,6 @@ const WareHouses = () => {
     setPage("add");
     setEditMode(true);
   }
-
   const navigate = useNavigate();
   const val = localStorage.getItem("userID");
   useEffect(() => {

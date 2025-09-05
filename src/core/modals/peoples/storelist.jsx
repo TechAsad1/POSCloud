@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Filter, Sliders } from "react-feather";
 import Select from "react-select";
 import { Edit, Eye, Globe, Trash2, User } from "react-feather";
@@ -11,13 +11,13 @@ import ImageWithBasePath from "../../img/imagewithbasebath";
 import { deleteClient, getClient, setToogleHeader, getUsers } from "../../redux/action";
 import { ChevronUp, PlusCircle, RotateCcw } from "feather-icons-react/build/IconComponents";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
-import { all_routes } from "../../../Router/all_routes";
+// import { all_routes } from "../../../Router/all_routes";
 import EditStore from "./EditStore.jsx";
 import AddStore from "./AddStore.jsx";
 
 const StoreList = () => {
 
-  const route = all_routes;
+  // const route = all_routes;
   const data = useSelector((state) => state.toggle_header);
   const renderTooltip = (props) => (
     <Tooltip id="pdf-tooltip" {...props}>
@@ -147,7 +147,7 @@ const StoreList = () => {
 
   const dispatch = useDispatch();
   const posts1 = useSelector((state) => state.clients);
-  const users = useSelector((state) => state.users);
+  // const users = useSelector((state) => state.users);
   const [dataSource, setDataSource] = useState([]);
   const [storeList, setStoreList] = useState([{ value: 0, label: 'Choose Store' }]);
   const [countryList, setCountryList] = useState([{ value: "Choose Country", label: 'Choose Country' }]);
@@ -156,7 +156,7 @@ const StoreList = () => {
   const [selectCountry, setSelectCountry] = useState(countryList[0]);
 
   const [posts, setPosts] = useState([]);
-  const [loginUser, setLoginUser] = useState(null);
+  // const [loginUser, setLoginUser] = useState(null);
 
   //Action Modes
   const [insertMode, setInsertMode] = useState(false);
@@ -166,7 +166,7 @@ const StoreList = () => {
 
   useEffect(() => {
     setPosts(posts1);
-  }, [loginUser, posts1]);
+  }, [posts1]);
 
   //Custom Code
   useEffect(() => {
