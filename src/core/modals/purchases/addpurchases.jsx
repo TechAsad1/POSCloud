@@ -400,7 +400,7 @@ const AddPurchases = (p) => {
                               <tr>
                                 <th>Product</th>
                                 <th>Qty</th>
-                                <th>Unit</th>
+                                <th>   Unit   </th>
                                 <th>Purchase Rate($)</th>
                                 <th>Gross Amount</th>
                                 <th>Discount(%)</th>
