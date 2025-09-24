@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Filter, Sliders } from "react-feather";
 import Select from "react-select";
-import { Edit, Eye, Globe, Trash2, User } from "react-feather";
+import { Edit, Globe, Trash2, User } from "react-feather";
 import { useDispatch, useSelector } from "react-redux";
 import Table from "../../../core/pagination/datatable";
 import Swal from "sweetalert2";
@@ -11,13 +11,13 @@ import ImageWithBasePath from "../../img/imagewithbasebath";
 import { deleteClient, getClient, setToogleHeader, getUsers } from "../../redux/action";
 import { ChevronUp, PlusCircle, RotateCcw } from "feather-icons-react/build/IconComponents";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
-// import { all_routes } from "../../../Router/all_routes";
 import EditStore from "./EditStore.jsx";
 import AddStore from "./AddStore.jsx";
+import { useLoginData } from "../../../helper/loginUserData.js";
 
 const StoreList = () => {
 
-  // const route = all_routes;
+  const loginUser = useLoginData();
   const data = useSelector((state) => state.toggle_header);
   const renderTooltip = (props) => (
     <Tooltip id="pdf-tooltip" {...props}>
@@ -65,7 +65,6 @@ const StoreList = () => {
       dataIndex: "email",
       sorter: (a, b) => a.email.length - b.email.length,
     },
-
     {
       title: "Phone",
       dataIndex: "contact",
@@ -81,42 +80,40 @@ const StoreList = () => {
       dataIndex: "country",
       sorter: (a, b) => a.country.length - b.country.length,
     },
-
-    {
-      title: "Action",
-      dataIndex: "action",
-      render: (_, record) => (
-        <div className="action-table-data">
-          <div className="edit-delete-action">
-            <div className="input-block add-lists"></div>
-
-            <Link className="me-2 p-2" to="#">
-              <Eye className="feather-view" />
-            </Link>
-
-            <Link
-              className="me-2 p-2"
-              to="#"
-              data-bs-toggle="modal"
-              data-bs-target="#edit-store"
-              onClick={() => updateHandle(record.clientId)}
-            >
-              <Edit className="feather-edit" />
-            </Link>
-
-            <Link
-              className="confirm-text p-2"
-              to="#"
-              onClick={() => showConfirmationAlert(record.clientId)}
-            >
-              <Trash2 className="feather-trash-2" />
-            </Link>
-          </div>
-        </div>
-      ),
-      sorter: (a, b) => a.action.length - b.action.length,
-    },
   ];
+  if (loginUser?.userRole === "SuperAdmin") {
+    columns.push(
+      {
+        title: "Action",
+        dataIndex: "action",
+        render: (_, record) => (
+          <div className="action-table-data">
+            <div className="edit-delete-action">
+              <div className="input-block add-lists"></div>
+              <Link
+                className="me-2 p-2"
+                to="#"
+                data-bs-toggle="modal"
+                data-bs-target="#edit-store"
+                onClick={() => updateHandle(record.clientId)}
+              >
+                <Edit className="feather-edit" />
+              </Link>
+
+              <Link
+                className="confirm-text p-2"
+                to="#"
+                onClick={() => showConfirmationAlert(record.clientId)}
+              >
+                <Trash2 className="feather-trash-2" />
+              </Link>
+            </div>
+          </div>
+        ),
+        sorter: (a, b) => a.action.length - b.action.length,
+      },
+    );
+  }
   const MySwal = withReactContent(Swal);
   const showConfirmationAlert = (p) => {
     MySwal.fire({
@@ -147,7 +144,6 @@ const StoreList = () => {
 
   const dispatch = useDispatch();
   const posts1 = useSelector((state) => state.clients);
-  // const users = useSelector((state) => state.users);
   const [dataSource, setDataSource] = useState([]);
   const [storeList, setStoreList] = useState([{ value: 0, label: 'Choose Store' }]);
   const [countryList, setCountryList] = useState([{ value: "Choose Country", label: 'Choose Country' }]);
@@ -156,7 +152,6 @@ const StoreList = () => {
   const [selectCountry, setSelectCountry] = useState(countryList[0]);
 
   const [posts, setPosts] = useState([]);
-  // const [loginUser, setLoginUser] = useState(null);
 
   //Action Modes
   const [insertMode, setInsertMode] = useState(false);
@@ -240,20 +235,6 @@ const StoreList = () => {
     setInsertMode(true);
   }
 
-
-  // const navigate = useNavigate();
-  // const val = localStorage.getItem("userID");
-  // useEffect(() => {
-  //   if (!isNaN(val) && Number.isInteger(Number(val)) && Number(val) > 0) {
-  //     const id = Number(val);
-  //     setLoginUser(users.find((i) => i.userId === id));
-  //   }
-  //   else
-  //     navigate(route.signin);
-  // }, [users, navigate]);
-  // if (!loginUser)
-  //   return null;
-
   return (
     <>
       <div className="page-wrapper">
@@ -316,18 +297,20 @@ const StoreList = () => {
                 </OverlayTrigger>
               </li>
             </ul>
-            <div className="page-btn">
-              <Link
-                to="#"
-                className="btn btn-added"
-                data-bs-toggle="modal"
-                data-bs-target="#add-store"
-                onClick={handleInsertMode}
-              >
-                <PlusCircle className="me-2" />
-                Add New Store
-              </Link>
-            </div>
+            {loginUser?.userRole === "SuperAdmin" && (
+              <div className="page-btn">
+                <Link
+                  to="#"
+                  className="btn btn-added"
+                  data-bs-toggle="modal"
+                  data-bs-target="#add-store"
+                  onClick={handleInsertMode}
+                >
+                  <PlusCircle className="me-2" />
+                  Add New Store
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* /product list */}

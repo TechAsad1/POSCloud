@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
 import ImageWithBasePath from "../../core/img/imagewithbasebath";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Calendar,
   ChevronUp,
@@ -12,7 +12,7 @@ import {
   StopCircle,
   Zap,
 } from "feather-icons-react/build/IconComponents";
-import { deleteCategory, getCategory, getUsers, setToogleHeader } from "../../core/redux/action";
+import { deleteCategory, getCategory, setToogleHeader } from "../../core/redux/action";
 import Select from "react-select";
 import { DatePicker } from "antd";
 import AddCategoryList from "../../core/modals/inventory/addcategorylist";
@@ -23,17 +23,15 @@ import Table from "../../core/pagination/datatable";
 import { useDispatch, useSelector } from "react-redux";
 import { format } from "date-fns";
 import { dateFormat, getImageFromUrl } from "../../helper/helpers";
-import { all_routes } from "../../Router/all_routes";
+import { useLoginData } from "../../helper/loginUserData";
 
 
 const CategoryList = () => {
 
-  const route = all_routes;
   const dispatch = useDispatch();
   const data = useSelector((state) => state.toggle_header);
   const postData1 = useSelector((state) => state.categories);
   const loading = useSelector((state) => state.loading);
-  const users = useSelector((state) => state.users);
   const [editMode, setEditMode] = useState(false);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const [search, setSearch] = useState({ name: "Choose Category", date: null, status: true });
@@ -41,9 +39,9 @@ const CategoryList = () => {
   const [getInvId, setInvId] = useState();
   const [dataSource, setDataSource] = useState([]);
   const [insertMode, setInsertMode] = useState(false);
+  const loginUser = useLoginData();
 
   const [postData, setPosts] = useState([]);
-  const [loginUser, setLoginUser] = useState(null);
 
   useEffect(() => {
     if (loginUser) {
@@ -193,7 +191,6 @@ const CategoryList = () => {
   //Custom Code
   useEffect(() => {
     dispatch(getCategory());
-    dispatch(getUsers());
   }, [dispatch]);
   const updateHandle = (id) => {
     setInvId(id);
@@ -265,17 +262,6 @@ const CategoryList = () => {
   const handleInsert = () => {
     setInsertMode(true);
   }
-
-  const navigate = useNavigate();
-  const val = localStorage.getItem("userID");
-  useEffect(() => {
-    if (!isNaN(val) && Number.isInteger(Number(val)) && Number(val) > 0) {
-      const id = Number(val);
-      setLoginUser(users.find((i) => i.userId === id));
-    }
-    else
-      navigate(route.signin);
-  }, [users, navigate]);
 
   return (
     <div>

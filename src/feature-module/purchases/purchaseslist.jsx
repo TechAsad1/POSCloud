@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ImageWithBasePath from "../../core/img/imagewithbasebath";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   ChevronUp,
   Download,
@@ -12,7 +12,7 @@ import {
   StopCircle,
   User,
 } from "feather-icons-react/build/IconComponents";
-import { deletePurchaseInv, getBranchById, getClientById, getProduct, getPurchaseByID, getPurchaseInv, getSupplier, getUsers, setToogleHeader } from "../../core/redux/action";
+import { deletePurchaseInv, getBranchById, getClientById, getProduct, getPurchaseByID, getPurchaseInv, getSupplier, setToogleHeader } from "../../core/redux/action";
 import { useDispatch, useSelector } from "react-redux";
 import Select from "react-select";
 import ImportPurchases from "../../core/modals/purchases/importpurchases";
@@ -23,11 +23,10 @@ import Table from "../../core/pagination/datatable";
 import AddPurchases from "../../core/modals/purchases/addpurchases";
 import { MinusCircle } from "react-feather";
 import { dateFormat, formatCurrency, getImageFromUrl } from "../../helper/helpers";
-import { all_routes } from "../../Router/all_routes";
+import { useLoginData } from "../../helper/loginUserData";
 
 const PurchasesList = () => {
 
-  const route = all_routes;
   const columns = [
     {
       title: "Purchase Date",
@@ -104,6 +103,7 @@ const PurchasesList = () => {
       ),
     },
   ];
+  const loginUser = useLoginData();
   const data = useSelector((state) => state.toggle_header);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const toggleFilterVisibility = () => {
@@ -192,7 +192,6 @@ const PurchasesList = () => {
   const supplier = useSelector((state) => state.suppliers);
   const singleBranch = useSelector((state) => state.branches);
   const singleClient = useSelector((state) => state.clients);
-  const users = useSelector((state) => state.users);
   const [showView, setShowView] = useState(false);
   const [supplierList, setSupplierList] = useState([{ value: 0, label: 'Choose Supplier' }]);
   const [invID, setInvID] = useState(0);
@@ -204,7 +203,6 @@ const PurchasesList = () => {
   const [insertMode, setInsertMode] = useState(false);
 
   const [posts, setPosts] = useState([]);
-  const [loginUser, setLoginUser] = useState(null);
 
   useEffect(() => {
     if (loginUser) {
@@ -219,12 +217,10 @@ const PurchasesList = () => {
     }
   }, [loginUser, posts1]);
 
-
   useEffect(() => {
     dispatch(getPurchaseInv());
     dispatch(getSupplier());
     dispatch(getProduct());
-    dispatch(getUsers());
   }, [dispatch]);
   useEffect(() => {
     searchEngine("", "");
@@ -299,17 +295,6 @@ const PurchasesList = () => {
     setInvID(id);
   }
 
-  const navigate = useNavigate();
-  const val = localStorage.getItem("userID");
-  useEffect(() => {
-    if (!isNaN(val) && Number.isInteger(Number(val)) && Number(val) > 0) {
-      const id = Number(val);
-      setLoginUser(users.find((i) => i.userId === id));
-    }
-    else
-      navigate(route.signin);
-  }, [users, navigate]);
-
   return (
     <div>
       <div className="page-wrapper">
@@ -378,7 +363,7 @@ const PurchasesList = () => {
                   to="#"
                   className="btn btn-added"
                   data-bs-toggle="modal"
-                  data-bs-target="#add-units"
+                  data-bs-target="#add-purchase"
                   onClick={() => handleInsert()}
                 >
                   <PlusCircle className="me-2" />

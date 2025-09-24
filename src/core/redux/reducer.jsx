@@ -1,4 +1,4 @@
-import { FetchLoader, FetchErr, getCategoryVar, updateCategoryVar, insertCategoryVar, deleteCategoryVar, getBrandVar, insertBrandVar, updateBrandVar, deleteBrandVar, getUnitVar, insertUnitVar, updateUnitVar, deleteUnitVar, getProductVar, insertProductVar, updateProductVar, deleteProductVar, addToCartVar, incrementVar, decrementVar, discountVar, netTotalVar, paymentModeVar, gstVar, getCustomerVar, insertCustomerVar, updateCustomerVar, deleteCustomerVar, clearCartVar, removeCartRowVar, getSaleInvVar, insertSaleInvVar, getPurchaseInvVar, insertPurchaseInvVar, getPurchaseVar, insertPurchaseVar, getSupplierVar, insertSupplierVar, updateSupplierVar, deleteSupplierVar, getClientVar, insertClientVar, updateClientVar, deleteClientVar, getBranchVar, insertBranchVar, updateBranchVar, deleteBranchVar, getUsersVar, insertUsersVar, updateUsersVar, deleteUsersVar, invIDVar, rowDiscVar, updateInvIDVar, deletePurchaseInvVar, getTransactionIDVar, insertSaleVar, getSaleVar, getTransactionVar, insertTransactionVar, rowGstVar, updateSaleInvVar, updatePurchaseInvVar, getPurchaseByIDVar, getSupplierByIdVar, getBranchByIdVar, rowPriceVar, getCustomerByIdVar, getSaleByIDVar, deleteSaleInvVar, getProductByIdVar, getUserByIdVar, getPurchaseInvByIdVar, getTransactionByRIDVar, UpdateCartRowVar, getCategoryByIdVar, getClientByIdVar, changeUnitCartRowVar } from "./action";
+import { FetchLoader, FetchErr, getCategoryVar, updateCategoryVar, insertCategoryVar, deleteCategoryVar, getBrandVar, insertBrandVar, updateBrandVar, deleteBrandVar, getUnitVar, insertUnitVar, updateUnitVar, deleteUnitVar, getProductVar, insertProductVar, updateProductVar, deleteProductVar, addToCartVar, incrementVar, decrementVar, discountVar, netTotalVar, paymentModeVar, gstVar, getCustomerVar, insertCustomerVar, updateCustomerVar, deleteCustomerVar, clearCartVar, removeCartRowVar, getSaleInvVar, insertSaleInvVar, getPurchaseInvVar, insertPurchaseInvVar, getPurchaseVar, insertPurchaseVar, getSupplierVar, insertSupplierVar, updateSupplierVar, deleteSupplierVar, getClientVar, insertClientVar, updateClientVar, deleteClientVar, getBranchVar, insertBranchVar, updateBranchVar, deleteBranchVar, getUsersVar, insertUsersVar, updateUsersVar, deleteUsersVar, invIDVar, rowDiscVar, updateInvIDVar, deletePurchaseInvVar, getTransactionIDVar, insertSaleVar, getSaleVar, getTransactionVar, insertTransactionVar, rowGstVar, updateSaleInvVar, updatePurchaseInvVar, getPurchaseByIDVar, getSupplierByIdVar, getBranchByIdVar, rowPriceVar, getCustomerByIdVar, getSaleByIDVar, deleteSaleInvVar, getProductByIdVar, getUserByIdVar, getPurchaseInvByIdVar, getTransactionByRIDVar, UpdateCartRowVar, getCategoryByIdVar, getClientByIdVar, changeUnitCartRowVar, qty_KeyDownVar, qty_LeaveVar, rowPrice_LeaveVar } from "./action";
 import initialState from "./initial.value";
 
 const rootReducer = (state = initialState, action) => {
@@ -75,74 +75,6 @@ const rootReducer = (state = initialState, action) => {
         ...state,
         posts: state.posts.filter((post) => post.productId !== action.payload),
       };
-    //Cart
-    case addToCartVar:
-      if (state.cart.find((x) => x.id === action.payload.id)) {
-        return {
-          ...state,
-          cart: calculate("plus", state, action.payload.id, 0)
-        };
-      } else {
-        return {
-          ...state,
-          cart: [...state.cart, { ...action.payload }],
-        };
-      }
-
-    case changeUnitCartRowVar:
-      return {
-        ...state,
-        cart: calculate("unit", state, action.id, action.unit),
-      };
-
-    case removeCartRowVar:
-      return {
-        ...state,
-        cart: state.cart.filter((post) => post.id !== action.payload),
-      };
-    case clearCartVar:
-      return {
-        ...state,
-        cart: state.cart.filter(() => false),
-      };
-    case incrementVar:
-      return {
-        ...state,
-        cart: calculate("plus", state, action.payload, 0)
-      };
-    case decrementVar:
-      return {
-        ...state,
-        cart: calculate("minus", state, action.payload, 0)
-      };
-    case rowGstVar:
-      return {
-        ...state,
-        cart: calculate("gst", state, action.payload, action.num)
-      };
-    case rowDiscVar:
-      return {
-        ...state,
-        cart: calculate("discount", state, action.payload, action.num)
-      };
-    case UpdateCartRowVar:
-      return {
-        ...state,
-        cart: state.cart.map((x) => x.id === action.payload ? { ...x, selectedUnit: action.unit, price: action.price, gstPerc: action.gstPerc, gst: action.gst, discPerc: action.discPerc, disc: action.disc, total: action.total, netTotal: action.netTotal } : x),
-      };
-    case discountVar:
-      return { ...state, discount: action.payload };
-    case rowPriceVar:
-      return {
-        ...state,
-        cart: calculate("price", state, action.payload, action.num),
-      };
-    case netTotalVar:
-      return { ...state, netTotal: action.payload };
-    case paymentModeVar:
-      return { ...state, paymentMode: action.payload };
-    case gstVar:
-      return { ...state, gst: action.payload };
     //Customer
     case getCustomerVar:
       return { ...state, customers: action.payload, error: null, loading: false };
@@ -367,59 +299,215 @@ const rootReducer = (state = initialState, action) => {
       return { ...state, categotylist_data: action.payload };
     case "Layoutstyle_data":
       return { ...state, layoutstyledata: action.payload };
+    //Cart
+    case addToCartVar:
+      return {
+        ...state,
+        cart: [...state.cart, { ...action.payload }],
+      };
+    case changeUnitCartRowVar:
+      return {
+        ...state,
+        cart: calculate("unit", state, action.payload),
+      };
+    case removeCartRowVar:
+      return {
+        ...state,
+        cart: state.cart.filter((_, i) => i !== action.payload),
+      };
+    case clearCartVar:
+      return {
+        ...state,
+        cart: state.cart.filter(() => false),
+      };
+    case incrementVar:
+      return {
+        ...state,
+        cart: calculate("plus", state, action.payload)
+      };
+    case decrementVar:
+      return {
+        ...state,
+        cart: calculate("minus", state, action.payload)
+      };
+    case qty_KeyDownVar:
+      return {
+        ...state,
+        cart: qty_KeyDown(state, action.payload)
+      };
+    case qty_LeaveVar:
+      return {
+        ...state,
+        cart: qty_KeyLeave(state, action.payload)
+      };
+    case rowGstVar:
+      return {
+        ...state,
+        cart: calculate("gst", state, action.payload)
+      };
+    case rowDiscVar:
+      return {
+        ...state,
+        cart: calculate("discount", state, action.payload)
+      };
+    case UpdateCartRowVar:
+      return {
+        ...state,
+        cart: state.cart.map((x) => x.id === action.payload ? { ...x, selectedUnit: action.unit, price: action.price, gstPerc: action.gstPerc, gst: action.gst, discPerc: action.discPerc, disc: action.disc, total: action.total, netTotal: action.netTotal } : x),
+      };
+    case discountVar:
+      return { ...state, discount: action.payload };
+    case rowPriceVar:
+      return {
+        ...state,
+        cart: calculate("price", state, action.payload),
+      };
+    case rowPrice_LeaveVar:
+      return {
+        ...state,
+        cart: price_Leave(state, action.payload)
+      };
+    case netTotalVar:
+      return { ...state, netTotal: action.payload };
+    case paymentModeVar:
+      return { ...state, paymentMode: action.payload };
+    case gstVar:
+      return { ...state, gst: action.payload };
     default:
       return state;
   }
 };
 
+const price_Leave = (state, e) => {
+  const x = state.cart[e.index];
+  let qty = x.qty;
+  let gstPerc = x.gstPerc;
+  let discPerc = x.discPerc;
+  let price = x.price;
+  let orignalPrice = x.orignalPrice;
+  let factor = x.factor;
+  let _total = 0;
+  let _netTotal = 0;
+  let _disc = 0;
+  let _gst = 0;
+  let _cPrice = 0;
+  let _custom = Number(e.num);
+  let uom = x.uom;
+  if (uom === x.maxUom) {
+    if (e.num === "" || e.num <= 0) {
+      let boxPr = orignalPrice * factor;
+      price = boxPr;
+    }
+    else {
+      let singlePr = _custom / factor;
+      price = _custom;
+      orignalPrice = singlePr;
+    }
+  }
+  else {
+    if (e.num === "" || e.num <= 0) {
+      price = orignalPrice;
+    }
+    else {
+      price = _custom;
+      orignalPrice = _custom;
+    }
+  }
+  _total = qty * price;
+  _netTotal = getNetTotal(_total, discPerc, gstPerc);
+  _disc = getDiscAmount(discPerc, _total);
+  _gst = getGstAmount(gstPerc, _total);
+  _cPrice = getCostPrice(qty, _netTotal);
+  return state.cart.map((x, i) => i === e.index ? { ...x, qty: qty, total: _total, price: price, discPerc: discPerc, gstPerc: gstPerc, disc: _disc, gst: _gst, netTotal: _netTotal, orignalPrice: orignalPrice, costPrice: _cPrice } : x);
+}
+
+const qty_KeyLeave = (state, e) => {
+  const x = state.cart[e.index];
+  let qty = e.qty;
+  let gstPerc = x.gstPerc;
+  let discPerc = x.discPerc;
+  let price = x.price;
+  let _total = 0;
+  let _netTotal = 0;
+  let _disc = 0;
+  let _gst = 0;
+  let _cPrice = 0;
+  if (e.qty === "" || e.qty <= 0)
+    qty = 1;
+  _total = qty * price;
+  _netTotal = getNetTotal(_total, discPerc, gstPerc);
+  _disc = getDiscAmount(discPerc, _total);
+  _gst = getGstAmount(gstPerc, _total);
+  _cPrice = getCostPrice(qty, _netTotal);
+  return state.cart.map((x, i) => i === e.index ? { ...x, qty: qty, total: _total, price: price, discPerc: discPerc, gstPerc: gstPerc, disc: _disc, gst: _gst, netTotal: _netTotal, costPrice: _cPrice } : x);
+}
+
+const qty_KeyDown = (state, e) => {
+  const x = state.cart[e.index];
+  let qty = e.qty;
+  let gstPerc = x.gstPerc;
+  let discPerc = x.discPerc;
+  let price = x.price;
+  let _total = 0;
+  let _netTotal = 0;
+  let _disc = 0;
+  let _gst = 0;
+  let _cPrice = 0;
+  _total = qty * price;
+  if (qty < 1)
+    qty = 1;
+  _netTotal = getNetTotal(_total, discPerc, gstPerc);
+  _disc = getDiscAmount(discPerc, _total);
+  _gst = getGstAmount(gstPerc, _total);
+  _cPrice = getCostPrice(qty, _netTotal);
+  if (e.qty === "") {
+    return state.cart.map((x, i) => i === e.index ? { ...x, qty: e.qty, total: _total, price: price, discPerc: discPerc, gstPerc: gstPerc, disc: _disc, gst: _gst, netTotal: _netTotal, costPrice: _cPrice } : x);
+  }
+  else
+    return state.cart.map((x, i) => i === e.index ? { ...x, qty: qty, total: _total, price: price, discPerc: discPerc, gstPerc: gstPerc, disc: _disc, gst: _gst, netTotal: _netTotal, costPrice: _cPrice } : x);
+}
+
 const getTotal = (qty, price) => { return qty * price; }
 const getNetTotal = (total, discPerc, gstPerc) => { return ((total - getDiscAmount(discPerc, total)) + getGstAmount(gstPerc, total)); }
 const getGstAmount = (gstPerc, total) => { return gstPerc * total / 100; }
 const getDiscAmount = (discPerc, total) => { return discPerc * total / 100; }
-const getCostPrice = (qty, netTotal) => { return netTotal / qty; }
+const getCostPrice = (qty, netTotal) => { return netTotal / qty; }//Single Unit Price
 
-const calculate = (task, state, id, num) => {
-  const x = state.cart.filter((x) => x.id === id);
-  let qty = x[0].qty;
-  let gstPerc = x[0].gstPerc;
-  let discPerc = x[0].discPerc;
-  let price = x[0].price;
-  let factor = x[0].factor;
-  let orignalPrice = x[0].orignalPrice;
-  let uom = x[0].uom;
-  if (task === "plus") {
+//Sale
+const calculate = (task, state, payload) => {
+  const x = state.cart[payload.index];
+  let qty = Number(x.qty);
+  let gstPerc = x.gstPerc;
+  let discPerc = x.discPerc;
+  let price = x.price;
+  let factor = x.factor;
+  let orignalPrice = x.orignalPrice;
+  let uom = x.uom;
+  if (task === "plus")
     qty = qty + 1;
-  }
-  else if (task === "minus") {
-    if (qty > 1) {
-      qty = qty - 1;
-    }
-  }
-  else if (task === "gst") {
-    gstPerc = num;
-  }
-  else if (task === "price") {
-    price = num;
-  }
+  else if (task === "minus")
+    qty = qty - 1;
+  else if (task === "gst")
+    gstPerc = payload.num;
+  else if (task === "price")
+    price = payload.num;
   else if (task === "unit") {
-    uom = num;
-    if (num === x[0].minUom) {
-      price = orignalPrice / factor;
-    }
-    else {
+    uom = payload.unit;
+    if (payload.unit === x.minUom) {
       price = orignalPrice;
     }
+    else {
+      price = orignalPrice * factor;
+    }
   }
-  else {
-    discPerc = num;
-  }
+  else
+    discPerc = payload.num;
   let _total = getTotal(qty, price);
   let _netTotal = getNetTotal(_total, discPerc, gstPerc);
   const _disc = getDiscAmount(discPerc, _total);
   const _gst = getGstAmount(gstPerc, _total);
   const _cPrice = getCostPrice(qty, _netTotal);
-  console.log(_netTotal);
-  return state.cart.map((x) => x.id === id ? { ...x, uom: uom, qty: qty, total: _total, price: price, discPerc: discPerc, gstPerc: gstPerc, disc: _disc, gst: _gst, netTotal: _netTotal, costPrice: _cPrice } : x);
+  return state.cart.map((r, i) => i === payload.index ? { ...r, uom: uom, qty: qty, total: _total, price: price, discPerc: discPerc, gstPerc: gstPerc, disc: _disc, gst: _gst, netTotal: _netTotal, orignalPrice: orignalPrice, costPrice: _cPrice } : r);
 }
 
 export default rootReducer;

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Filter, Sliders, User, Globe, Edit, Trash2 } from "react-feather";
 import ImageWithBasePath from "../../core/img/imagewithbasebath";
 import Select from "react-select";
@@ -8,14 +8,13 @@ import Table from "../../core/pagination/datatable";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
 import SupplierModal from "../../core/modals/peoples/supplierModal";
-import { deleteSupplier, getSupplier, getUsers, setToogleHeader } from "../../core/redux/action";
+import { deleteSupplier, getSupplier, setToogleHeader } from "../../core/redux/action";
 import { ChevronUp, PlusCircle, RotateCcw } from "feather-icons-react/build/IconComponents";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
-import { all_routes } from "../../Router/all_routes";
+import { useLoginData } from "../../helper/loginUserData";
 
 const Suppliers = () => {
 
-  const route = all_routes;
   const data = useSelector((state) => state.toggle_header);
   const renderTooltip = (props) => (
     <Tooltip id="pdf-tooltip" {...props}>
@@ -45,7 +44,6 @@ const Suppliers = () => {
 
   const dispatch = useDispatch();
   const posts1 = useSelector((state) => state.suppliers);
-  const users = useSelector((state) => state.users);
   const [invID, setInvID] = useState(0);
   const [editMode, setEditMode] = useState(false);
   const [dataSource, setDataSource] = useState([]);
@@ -54,7 +52,7 @@ const Suppliers = () => {
   const [page, setPage] = useState("add");
 
   const [posts, setPosts] = useState([]);
-  const [loginUser, setLoginUser] = useState(null);
+  const loginUser = useLoginData();
 
   useEffect(() => {
     if (loginUser) {
@@ -160,7 +158,6 @@ const Suppliers = () => {
   //Custom Code
   useEffect(() => {
     dispatch(getSupplier());
-    dispatch(getUsers());
   }, [dispatch]);
   useEffect(() => {
     if (posts.length > 0) {
@@ -234,19 +231,6 @@ const Suppliers = () => {
     setPage("add");
     setEditMode(true);
   }
-
-  const navigate = useNavigate();
-  const val = localStorage.getItem("userID");
-  useEffect(() => {
-    if (!isNaN(val) && Number.isInteger(Number(val)) && Number(val) > 0) {
-      const id = Number(val);
-      setLoginUser(users.find((i) => i.userId === id));
-    }
-    else
-      navigate(route.signin);
-  }, [users, navigate]);
-  if (!loginUser)
-    return null;
 
   return (
     <div className="page-wrapper">

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import ImageWithBasePath from "../../core/img/imagewithbasebath";
 import { ChevronUp, RotateCcw } from "feather-icons-react/build/IconComponents";
 import { deleteUsers, getUsers, setToogleHeader } from "../../core/redux/action";
@@ -18,12 +18,12 @@ import Swal from "sweetalert2";
 import Table from "../../core/pagination/datatable";
 import AddUsers from "../../core/modals/usermanagement/addusers";
 import EditUser from "../../core/modals/usermanagement/edituser";
-import { all_routes } from "../../Router/all_routes";
 import { getImageFromUrl } from "../../helper/helpers";
+import { useLoginData } from "../../helper/loginUserData";
 
 const Users = () => {
 
-  const route = all_routes;
+  const loginUser = useLoginData();
   const options = [
     { value: "date", label: "Sort by Date" },
     { value: "newest", label: "Newest" },
@@ -93,46 +93,72 @@ const Users = () => {
       sorter: (a, b) => a.loginId.length - b.loginId.length,
     },
     {
+      title: "User Role",
+      dataIndex: "userRole",
+      sorter: (a, b) => a.userRole.length - b.userRole.length,
+    },
+    {
       title: "CreatedBy",
       dataIndex: "createdBy",
       render: (id) => (<span>{posts1.find((i) => i.userId === id)?.userName}</span>),
       sorter: (a, b) => a.createdBy.length - b.createdBy.length,
     },
-    {
-      title: "Actions",
-      dataIndex: "actions",
-      render: (_, record) => (
-        <div className="action-table-data">
-          <div className="edit-delete-action">
-            <Link className="me-2 p-2" to="#">
-              <i
-                data-feather="eye"
-                className="feather feather-eye action-eye"
-              ></i>
-            </Link>
-            <Link
-              className="me-2 p-2"
-              to="#"
-              data-bs-toggle="modal"
-              data-bs-target="#edit-units"
-              onClick={(e) => updateHandle(e, record.userId)}
-            >
-              <i data-feather="edit" className="feather-edit"></i>
-            </Link>
-            <Link className="confirm-text p-2" to="#">
-              <i
-                data-feather="trash-2"
-                className="feather-trash-2"
-                onClick={(e) => showConfirmationAlert(e, record.userId)}
-              ></i>
-            </Link>
-          </div>
-        </div>
-      ),
-    },
   ];
+  if (loginUser?.userRole === "SuperAdmin") {
+    columns.push(
+      {
+        title: "Actions",
+        dataIndex: "actions",
+        render: (_, record) => (
+          <div className="action-table-data">
+            <div className="edit-delete-action">
+              <Link
+                className="me-2 p-2"
+                to="#"
+                data-bs-toggle="modal"
+                data-bs-target="#edit-units"
+                onClick={(e) => updateHandle(e, record.userId)}
+              >
+                <i data-feather="edit" className="feather-edit"></i>
+              </Link>
+              <Link className="confirm-text p-2" to="#">
+                <i
+                  data-feather="trash-2"
+                  className="feather-trash-2"
+                  onClick={() => showConfirmationAlert(record.userId)}
+                ></i>
+              </Link>
+            </div>
+          </div>
+        ),
+      },
+    );
+  }
+  else {
+    columns.push(
+      {
+        title: "Actions",
+        dataIndex: "actions",
+        render: (_, record) => (
+          <div className="action-table-data">
+            <div className="edit-delete-action">
+              <Link
+                className="me-2 p-2"
+                to="#"
+                data-bs-toggle="modal"
+                data-bs-target="#edit-units"
+                onClick={(e) => updateHandle(e, record.userId)}
+              >
+                <i data-feather="edit" className="feather-edit"></i>
+              </Link>
+            </div>
+          </div>
+        ),
+      },
+    );
+  }
   const MySwal = withReactContent(Swal);
-  const showConfirmationAlert = (p) => {
+  const showConfirmationAlert = (id) => {
     MySwal.fire({
       title: "Are you sure?",
       text: "You won't be able to revert this!",
@@ -152,7 +178,7 @@ const Users = () => {
             confirmButton: "btn btn-success",
           },
         });
-        dispatch(deleteUsers(p));
+        dispatch(deleteUsers(id));
       } else {
         MySwal.close();
       }
@@ -174,7 +200,6 @@ const Users = () => {
   const [selectRole, setSelectRole] = useState(role[0]);
 
   const [posts, setPosts] = useState([]);
-  const [loginUser, setLoginUser] = useState(null);
 
   useEffect(() => {
     if (loginUser) {
@@ -248,19 +273,6 @@ const Users = () => {
     setEditMode(true);
   }
 
-  const navigate = useNavigate();
-  const val = localStorage.getItem("userID");
-  useEffect(() => {
-    if (!isNaN(val) && Number.isInteger(Number(val)) && Number(val) > 0) {
-      const id = Number(val);
-      setLoginUser(posts1.find((i) => i.userId === id));
-    }
-    else
-      navigate(route.signin);
-  }, [posts, navigate]);
-  if (!loginUser)
-    return null;
-
   return (
     <div>
       <div className="page-wrapper">
@@ -323,17 +335,19 @@ const Users = () => {
                 </OverlayTrigger>
               </li>
             </ul>
-            <div className="page-btn">
-              <a
-                to="#"
-                className="btn btn-added"
-                data-bs-toggle="modal"
-                data-bs-target="#add-units"
-              >
-                <PlusCircle className="me-2" />
-                Add New User
-              </a>
-            </div>
+            {loginUser?.userRole === "SuperAdmin" && (
+              <div className="page-btn">
+                <a
+                  to="#"
+                  className="btn btn-added"
+                  data-bs-toggle="modal"
+                  data-bs-target="#add-units"
+                >
+                  <PlusCircle className="me-2" />
+                  Add New User
+                </a>
+              </div>
+            )}
           </div>
           {/* /product list */}
           <div className="card table-list-card">
@@ -438,7 +452,7 @@ const Users = () => {
         </div>
       </div>
       <AddUsers userId={loginUser?.userId} />
-      <EditUser id={invId} isEditMode={editMode} setEditMode={setEditMode} row={posts.filter((x) => x.userId === invId)} />
+      <EditUser isEditMode={editMode} setEditMode={setEditMode} userRow={posts.find((i) => i.userId === invId)} invId={invId} />
     </div>
   );
 };

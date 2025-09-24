@@ -6,15 +6,14 @@ import {
   UserCheck,
 } from "feather-icons-react/build/IconComponents";
 import Chart from "react-apexcharts";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import ImageWithBasePath from "../../core/img/imagewithbasebath";
 import { ArrowRight } from "react-feather";
 import { all_routes } from "../../Router/all_routes";
 import { useDispatch, useSelector } from "react-redux";
-import { getCategory, getCustomer, getProduct, getPurchaseInv, getSale, getSaleInv, getSupplier, getUsers } from "../../core/redux/action";
+import { getCategory, getCustomer, getProduct, getPurchaseInv, getSale, getSaleInv, getSupplier } from "../../core/redux/action";
 import { formatCurrency, getImageFromUrl } from "../../helper/helpers";
-// import { useNavigate } from "react-router-dom";
-// import Loader from "../loader/loader";
+import { useLoginData } from "../../helper/loginUserData";
 
 const Dashboard = () => {
   const route = all_routes;
@@ -26,10 +25,7 @@ const Dashboard = () => {
   const customers = useSelector((state) => state.customers);
   const products = useSelector((state) => state.posts);
   const categoryStore = useSelector((state) => state.categories);
-  const users = useSelector((state) => state.users);
-  const [loginUser, setLoginUser] = useState(null);
-  //Login
-  // const users = useSelector((state) => state.users);
+  const loginUser = useLoginData();
 
   useEffect(() => {
     dispatch(getPurchaseInv());
@@ -39,7 +35,6 @@ const Dashboard = () => {
     dispatch(getProduct());
     dispatch(getSale());
     dispatch(getCategory());
-    dispatch(getUsers());
   }, [dispatch]);
   const month = saleInv.map((x) =>
     new Intl.DateTimeFormat("en-US", { month: "long" }).format(new Date(x.createdDate))
@@ -131,17 +126,6 @@ const Dashboard = () => {
     .filter((i) => i.clientId === loginUser?.clientId && i.branchId === loginUser?.branchId)
     .sort((a, b) => b.qty - a.qty)
     .slice(0, 5);
-
-  const navigate = useNavigate();
-  const val = localStorage.getItem("userID");
-  useEffect(() => {
-    if (!isNaN(val) && Number.isInteger(Number(val)) && Number(val) > 0) {
-      const id = Number(val);
-      setLoginUser(users.find((i) => i.userId === id));
-    }
-    else
-      navigate(route.signin);
-  }, [users, navigate]);
 
   return (
     <div>

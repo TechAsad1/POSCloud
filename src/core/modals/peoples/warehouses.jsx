@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Filter, Sliders } from "react-feather";
 import Select from "react-select";
 import { Globe, User } from "react-feather";
@@ -8,14 +8,14 @@ import Table from "../../pagination/datatable";
 import withReactContent from "sweetalert2-react-content";
 import Swal from "sweetalert2";
 import { useDispatch, useSelector } from "react-redux";
-import { deleteBranch, getBranch, getClient, insertBranch, updateBranch, setToogleHeader, getUsers } from "../../redux/action";
+import { deleteBranch, getBranch, getClient, insertBranch, updateBranch, setToogleHeader } from "../../redux/action";
 import { ChevronUp, PlusCircle, RotateCcw } from "feather-icons-react/build/IconComponents";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
-import { all_routes } from "../../../Router/all_routes";
+import { useLoginData } from "../../../helper/loginUserData";
 
 const WareHouses = () => {
 
-  const route = all_routes;
+  const loginUser = useLoginData();
   const data = useSelector((state) => state.toggle_header);
   const renderTooltip = (props) => (
     <Tooltip id="pdf-tooltip" {...props}>
@@ -110,20 +110,14 @@ const WareHouses = () => {
       dataIndex: "country",
       sorter: (a, b) => a.country.length - b.country.length,
     },
-    {
+  ];
+  if (loginUser?.userRole === "SuperAdmin") {
+    columns.push({
       title: "Actions",
       dataIndex: "actions",
       render: (_, record) => (
         <div className="action-table-data">
           <div className="edit-delete-action">
-            <Link
-              className="me-2 edit-icon p-2"
-              to="#"
-              data-bs-toggle="modal"
-              data-bs-target="#edit-units"
-            >
-              <i data-feather="eye" className="feather-eye"></i>
-            </Link>
             <Link
               className="me-2 p-2"
               to="#"
@@ -133,14 +127,18 @@ const WareHouses = () => {
             >
               <i data-feather="edit" className="feather-edit"></i>
             </Link>
-            <Link className="confirm-text p-2" to="#" onClick={() => showConfirmationAlert(record.branchId)}>
+            <Link
+              className="confirm-text p-2"
+              to="#"
+              onClick={() => showConfirmationAlert(record.branchId)}
+            >
               <i data-feather="trash-2" className="feather-trash-2"></i>
             </Link>
           </div>
         </div>
       ),
-    },
-  ];
+    });
+  }
   const options = [
     { value: "date", label: "Sort by Date" },
     { value: "newest", label: "Newest" },
@@ -149,7 +147,6 @@ const WareHouses = () => {
 
   const dispatch = useDispatch();
   const branches = useSelector((state) => state.branches);
-  const users = useSelector((state) => state.users);
   //Custom Code
   const [page, setPage] = useState("add");
   const [dataSource, setDataSource] = useState([]);
@@ -162,7 +159,6 @@ const WareHouses = () => {
   useEffect(() => {
     dispatch(getBranch());
     dispatch(getClient());
-    dispatch(getUsers());
   }, [dispatch]);
   useEffect(() => {
     setBranchList((prev) => [
@@ -225,7 +221,6 @@ const WareHouses = () => {
 
   //Insert/Update
   const [clientStore, setPosts] = useState([]);
-  const [loginUser, setLoginUser] = useState(null);
 
   const [invID, setInvID] = useState(0);
   const [editMode, setEditMode] = useState(false);
@@ -235,21 +230,20 @@ const WareHouses = () => {
   const [errors, setErrors] = useState({});
   //Ref
   const nameRef = useRef();
+  const contactRef = useRef();
+  const emailRef = useRef();
+  const addressRef = useRef();
+  const stateRef = useRef();
+  const zipRef = useRef();
+  const cityRef = useRef();
+  const countryRef = useRef();
+
   const nameRef2 = useRef();
   const formRef = useRef(null);
 
-  // useEffect(() => {
-  //   if (loginUser) {
-  //     const filtered = branches.filter(
-  //       (i) =>
-  //         i.clientId === loginUser.clientId &&
-  //         i.branchId === loginUser.branchId
-  //     );
-  //     setPosts(filtered);
-  //   } else
-  //     setPosts([]);
-  // }, [loginUser, clientStore1]);
-
+  useEffect(() => {
+    setFormData({ ...formData, createdBy: loginUser?.userId });
+  }, [loginUser]);
 
   useEffect(() => {
     setPosts(clientStore1);
@@ -275,46 +269,40 @@ const WareHouses = () => {
     ]);
   }, [clientStore]);
   //Validation
-  const validate = (p) => {
+  const validate = () => {
     let tempErrors = {};
-    if (p.target[0].value === "") {
+    if (nameRef.current.value === "") {
       tempErrors.name = "Branch name required";
-      nameRef.current.classList.add("is-invalid");
       setErrors(tempErrors);
     }
     else if (selectClient.label === "Choose Client Name") {
       tempErrors.insertClientName = "Client name required";
-      nameRef.current.classList.add("is-invalid");
       setErrors(tempErrors);
     }
     else {
       setErrors({ ...errors, name: "", insertClientName: "" });
-      nameRef.current.classList.remove("is-invalid");
     }
     return Object.keys(tempErrors).length === 0;
   };
   //Submit
-  const handleInsert = (e) => {
-    e.preventDefault();
-    if (validate(e)) {
+  const handleInsert = () => {
+    if (validate()) {
       dispatch(insertBranch(formData));
       successAlert("Record inserted successfully");
-      clearForm(e.target);
+      clearForm();
     }
   };
-  const clearForm = (e) => {
+  const clearForm = () => {
     setErrors({ ...errors, name: "", insertClientName: "" });
-    nameRef.current.classList.remove("is-invalid");
     setFormData({ ...formData, name: "", email: "", contact: "", address: "", city: "", country: "" });
-    e[0].value = "";
-    e[1].value = "";
-    e[2].value = "";
-    e[3].value = "";
-    e[4].value = "";
-    e[5].value = "";
-    e[6].value = "";
-    e[7].value = "";
-    e[8].value = "";
+    nameRef.current.value = "";
+    contactRef.current.value = "0";
+    emailRef.current.value = "";
+    addressRef.current.value = "";
+    stateRef.current.value = "";
+    zipRef.current.value = "";
+    cityRef.current.value = "";
+    countryRef.current.value = "";
   }
   useEffect(() => {
     if (editMode) {
@@ -326,9 +314,6 @@ const WareHouses = () => {
         const res = branches.find((i) => i.branchId === Number(invID));
         setFormData({ ...formData, name: res.branchName, email: res.email, contact: res.contact, address: res.address, state: res.state, zipCode: res.zipCode, city: res.city, country: res.country });
         setErrors({ ...errors, updateErr: "" });
-        if (nameRef2?.current) {
-          nameRef2.current.classList.remove("is-invalid");
-        }
       }
     }
   }, [editMode])
@@ -337,26 +322,19 @@ const WareHouses = () => {
     setEditMode(false);
   }
   //Validation
-  const validate2 = (p) => {
+  const validate2 = () => {
     let tempErrors = {};
-    if (p.target[0].value === "") {
+    if (nameRef2.current.value === "") {
       tempErrors.updateErr = "Branch name required";
-      if (nameRef2?.current) {
-        nameRef2.current.classList.add("is-invalid");
-      }
       setErrors(tempErrors);
     }
     else {
       setErrors({ ...errors, updateErr: "" });
-      if (nameRef2?.current) {
-        nameRef2.current.classList.remove("is-invalid");
-      }
     }
     return Object.keys(tempErrors).length === 0;
   };
-  const handleUpdate = (e) => {
-    e.preventDefault();
-    if (validate2(e)) {
+  const handleUpdate = () => {
+    if (validate2()) {
       dispatch(updateBranch(invID, formData));
       successAlert("Record updated successfully");
     }
@@ -378,18 +356,6 @@ const WareHouses = () => {
     setPage("add");
     setEditMode(true);
   }
-  const navigate = useNavigate();
-  const val = localStorage.getItem("userID");
-  useEffect(() => {
-    if (!isNaN(val) && Number.isInteger(Number(val)) && Number(val) > 0) {
-      const id = Number(val);
-      setLoginUser(users.find((i) => i.userId === id));
-    }
-    else
-      navigate(route.signin);
-  }, [users, navigate]);
-  if (!loginUser)
-    return null;
 
   return (
     <div className="page-wrapper">
@@ -452,18 +418,21 @@ const WareHouses = () => {
               </OverlayTrigger>
             </li>
           </ul>
-          <div className="page-btn">
-            <Link
-              to="#"
-              className="btn btn-added"
-              data-bs-toggle="modal"
-              data-bs-target="#add-units"
-              onClick={handleInsertMode}
-            >
-              <PlusCircle className="me-2" />
-              Add New Branch
-            </Link>
-          </div>
+          {loginUser?.userRole === "SuperAdmin" &&
+            (
+              <div className="page-btn">
+                <Link
+                  to="#"
+                  className="btn btn-added"
+                  data-bs-toggle="modal"
+                  data-bs-target="#add-units"
+                  onClick={handleInsertMode}
+                >
+                  <PlusCircle className="me-2" />
+                  Add New Branch
+                </Link>
+              </div>
+            )}
         </div>
 
         {/* /product list */}
@@ -592,88 +561,86 @@ const WareHouses = () => {
                     </button>
                   </div>
                   <div className="modal-body custom-modal-body">
-                    <form onSubmit={handleInsert} ref={formRef}>
-                      <div className="row">
-                        <div className="col-lg-6">
-                          <div className="mb-3 input-blocks">
-                            <label className="form-label">Branch Name</label>
-                            <input type="text" className="form-control" ref={nameRef} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-                            {errors.name && <p style={{ color: "#ff7676" }}>{errors.name}</p>}
-                          </div>
-                        </div>
-                        <div className="col-lg-6">
-                          <div className="mb-3 input-blocks">
-                            <label className="form-label">Client Name</label>
-                            <Select
-                              classNamePrefix="react-select"
-                              options={clients}
-                              onChange={(e) => handleSelectClient(e.value)}
-                              value={selectClient}
-                            />
-                            {errors.insertClientName && <p style={{ color: "#ff7676" }}>{errors.insertClientName}</p>}
-                          </div>
-                        </div>
-                        <div className="col-lg-12">
-                          <div className="mb-3 war-add">
-                            <label className="mb-2">Phone Number</label>
-                            <input
-                              className="form-control"
-                              type="text"
-                              onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
-                            />
-                          </div>
-                        </div>
-                        <div className="col-lg-12">
-                          <div className="mb-3">
-                            <label className="form-label">Email</label>
-                            <input type="email" className="form-control" onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-                          </div>
-                        </div>
-                        <div className="col-lg-12">
-                          <div className="mb-3">
-                            <label className="form-label">Address</label>
-                            <input type="text" className="form-control" onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
-                          </div>
-                        </div>
-                        <div className="col-lg-6">
-                          <div className="mb-3 mb-0">
-                            <label>State</label>
-                            <input type="text" className="form-control" onChange={(e) => setFormData({ ...formData, state: e.target.value })} />
-                          </div>
-                        </div>
-                        <div className="col-lg-6">
-                          <div className="mb-3 mb-0">
-                            <label>ZipCode</label>
-                            <input type="text" className="form-control" onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })} />
-                          </div>
-                        </div>
-                        <div className="col-lg-6">
-                          <div className="mb-3 mb-0">
-                            <label>City</label>
-                            <input type="text" className="form-control" onChange={(e) => setFormData({ ...formData, city: e.target.value })} />
-                          </div>
-                        </div>
-                        <div className="col-lg-6">
-                          <div className="mb-3 mb-0">
-                            <label className="form-label">Country</label>
-                            <input type="text" className="form-control" onChange={(e) => setFormData({ ...formData, country: e.target.value })} style={{ marginTop: "-9px" }} />
-                          </div>
+                    <div className="row">
+                      <div className="col-lg-6">
+                        <div className="mb-3 input-blocks">
+                          <label className="form-label">Branch Name</label>
+                          <input type="text" className={`form-control ${errors.name ? "is-invalid" : ""}`} ref={nameRef} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                          {errors.name && <p style={{ color: "#ff7676" }}>{errors.name}</p>}
                         </div>
                       </div>
-                      <div className="modal-footer-btn">
-                        <button
-                          type="button"
-                          className="btn btn-cancel me-2"
-                          data-bs-dismiss="modal"
-                        >
-                          Close
-                        </button>
-
-                        <button type="submit" className="btn btn-submit">
-                          Create Client
-                        </button>
+                      <div className="col-lg-6">
+                        <div className="mb-3 input-blocks">
+                          <label className="form-label">Client Name</label>
+                          <Select
+                            classNamePrefix="react-select"
+                            options={clients}
+                            onChange={(e) => handleSelectClient(e.value)}
+                            value={selectClient}
+                          />
+                          {errors.insertClientName && <p style={{ color: "#ff7676" }}>{errors.insertClientName}</p>}
+                        </div>
                       </div>
-                    </form>
+                      <div className="col-lg-12">
+                        <div className="mb-3 war-add">
+                          <label className="mb-2">Phone Number</label>
+                          <input
+                            className="form-control"
+                            type="number"
+                            ref={contactRef}
+                            onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div className="col-lg-12">
+                        <div className="mb-3">
+                          <label className="form-label">Email</label>
+                          <input type="email" className="form-control" ref={emailRef} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                        </div>
+                      </div>
+                      <div className="col-lg-12">
+                        <div className="mb-3">
+                          <label className="form-label">Address</label>
+                          <input type="text" className="form-control" ref={addressRef} onChange={(e) => setFormData({ ...formData, address: e.target.value })} />
+                        </div>
+                      </div>
+                      <div className="col-lg-6">
+                        <div className="mb-3 mb-0">
+                          <label>State</label>
+                          <input type="text" className="form-control" ref={stateRef} onChange={(e) => setFormData({ ...formData, state: e.target.value })} />
+                        </div>
+                      </div>
+                      <div className="col-lg-6">
+                        <div className="mb-3 mb-0">
+                          <label>ZipCode</label>
+                          <input type="text" className="form-control" ref={zipRef} onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })} />
+                        </div>
+                      </div>
+                      <div className="col-lg-6">
+                        <div className="mb-3 mb-0">
+                          <label>City</label>
+                          <input type="text" className="form-control" ref={cityRef} onChange={(e) => setFormData({ ...formData, city: e.target.value })} />
+                        </div>
+                      </div>
+                      <div className="col-lg-6">
+                        <div className="mb-3 mb-0">
+                          <label className="form-label">Country</label>
+                          <input type="text" className="form-control" ref={countryRef} onChange={(e) => setFormData({ ...formData, country: e.target.value })} style={{ marginTop: "-9px" }} />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="modal-footer-btn">
+                      <button
+                        type="button"
+                        className="btn btn-cancel me-2"
+                        data-bs-dismiss="modal"
+                      >
+                        Close
+                      </button>
+                      <button type="submit" className="btn btn-submit" onClick={handleInsert}>
+                        Create Branch
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -702,103 +669,101 @@ const WareHouses = () => {
                     </button>
                   </div>
                   <div className="modal-body custom-modal-body">
-                    <form onSubmit={handleUpdate}>
-                      <div className="row">
-                        <div className="col-lg-12">
-                          <div className="mb-3">
-                            <label className="form-label">Branch Name</label>
-                            <input
-                              type="text"
-                              className="form-control"
-                              value={formData?.name ?? ""}
-                              ref={nameRef2} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            />
-                            {errors.updateErr && <p style={{ color: "#ff7676" }}>{errors.updateErr}</p>}
-                          </div>
-                        </div>
-                        <div className="col-lg-12">
-                          <div className="mb-3">
-                            <label className="mb-2">Phone Number</label>
-                            <input
-                              className="form-control"
-                              type="text"
-                              value={formData?.contact ?? ""}
-                              onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
-                            />
-                          </div>
-                        </div>
-                        <div className="col-lg-12">
-                          <div className="mb-3">
-                            <label className="form-label">Email</label>
-                            <input
-                              type="email"
-                              className="form-control"
-                              value={formData?.email ?? ""}
-                              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            />
-                          </div>
-                        </div>
-                        <div className="col-lg-12">
-                          <div className="mb-3">
-                            <label className="form-label">Address</label>
-                            <input
-                              type="text"
-                              className="form-control"
-                              value={formData?.address ?? ""}
-                              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                            />
-                          </div>
-                        </div>
-                        <div className="col-lg-6">
-                          <div className="mb-3 mb-0">
-                            <label>State</label>
-                            <input type="text" className="form-control" value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} />
-                          </div>
-                        </div>
-                        <div className="col-lg-6">
-                          <div className="mb-3 mb-0">
-                            <label>ZipCode</label>
-                            <input type="text" className="form-control" value={formData?.zipCode ?? ""} onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })} />
-                          </div>
-                        </div>
-                        <div className="col-lg-6">
-                          <div className="mb-3">
-                            <label>City</label>
-                            <input
-                              type="text"
-                              className="form-control"
-                              value={formData?.city ?? ""}
-                              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                            />
-                          </div>
-                        </div>
-                        <div className="col-lg-6">
-                          <div className="mb-3">
-                            <label className="form-label">Country</label>
-                            <input
-                              type="text"
-                              className="form-control"
-                              value={formData?.country ?? ""}
-                              onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                              style={{ marginTop: "-9px" }}
-                            />
-                          </div>
+                    <div className="row">
+                      <div className="col-lg-12">
+                        <div className="mb-3">
+                          <label className="form-label">Branch Name</label>
+                          <input
+                            type="text"
+                            className={`form-control ${errors.updateErr ? "is-invalid" : ""}`}
+                            value={formData?.name ?? ""}
+                            ref={nameRef2} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          />
+                          {errors.updateErr && <p style={{ color: "#ff7676" }}>{errors.updateErr}</p>}
                         </div>
                       </div>
-                      <div className="modal-footer-btn">
-                        <button
-                          type="button"
-                          className="btn btn-cancel me-2"
-                          data-bs-dismiss="modal"
-                          onClick={handleModalClose}
-                        >
-                          Close
-                        </button>
-                        <button type="submit" className="btn btn-submit">
-                          Save Changes
-                        </button>
+                      <div className="col-lg-12">
+                        <div className="mb-3">
+                          <label className="mb-2">Phone Number</label>
+                          <input
+                            className="form-control"
+                            type="text"
+                            value={formData?.contact ?? ""}
+                            onChange={(e) => setFormData({ ...formData, contact: e.target.value })}
+                          />
+                        </div>
                       </div>
-                    </form>
+                      <div className="col-lg-12">
+                        <div className="mb-3">
+                          <label className="form-label">Email</label>
+                          <input
+                            type="email"
+                            className="form-control"
+                            value={formData?.email ?? ""}
+                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div className="col-lg-12">
+                        <div className="mb-3">
+                          <label className="form-label">Address</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={formData?.address ?? ""}
+                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div className="col-lg-6">
+                        <div className="mb-3 mb-0">
+                          <label>State</label>
+                          <input type="text" className="form-control" value={formData.state} onChange={(e) => setFormData({ ...formData, state: e.target.value })} />
+                        </div>
+                      </div>
+                      <div className="col-lg-6">
+                        <div className="mb-3 mb-0">
+                          <label>ZipCode</label>
+                          <input type="text" className="form-control" value={formData?.zipCode ?? ""} onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })} />
+                        </div>
+                      </div>
+                      <div className="col-lg-6">
+                        <div className="mb-3">
+                          <label>City</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={formData?.city ?? ""}
+                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div className="col-lg-6">
+                        <div className="mb-3">
+                          <label className="form-label">Country</label>
+                          <input
+                            type="text"
+                            className="form-control"
+                            value={formData?.country ?? ""}
+                            onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                            style={{ marginTop: "-9px" }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="modal-footer-btn">
+                      <button
+                        type="button"
+                        className="btn btn-cancel me-2"
+                        data-bs-dismiss="modal"
+                        onClick={handleModalClose}
+                      >
+                        Close
+                      </button>
+                      <button type="submit" className="btn btn-submit" onClick={handleUpdate}>
+                        Save Changes
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

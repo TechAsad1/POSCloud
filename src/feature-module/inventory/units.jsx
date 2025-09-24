@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Table from "../../core/pagination/datatable";
 import AddUnit from "../../core/modals/inventory/addunit";
 import EditUnit from "../../core/modals/inventory/editunit";
@@ -22,11 +22,10 @@ import { OverlayTrigger, Tooltip } from "react-bootstrap";
 import ImageWithBasePath from "../../core/img/imagewithbasebath";
 import { deleteUnit, getUnit, setToogleHeader } from "../../core/redux/action";
 import { format } from "date-fns";
-import { all_routes } from "../../Router/all_routes";
+import { useLoginData } from "../../helper/loginUserData";
 
 export const Units = () => {
 
-  const route = all_routes;
   const dispatch = useDispatch();
   const data = useSelector((state) => state.toggle_header);
   const postData = useSelector((state) => state.units);
@@ -37,7 +36,7 @@ export const Units = () => {
   const [getInvId, setInvId] = useState();
   const [dataSource, setDataSource] = useState([]);
   const [insertMode, setInsertMode] = useState(false);
-  const [userId, setUserId] = useState(0);
+  const loginUser = useLoginData();
 
   const oldandlatestvalue = [
     { value: "date", label: "Sort by Date" },
@@ -88,7 +87,7 @@ export const Units = () => {
       title: "Created On",
       dataIndex: "createdDate",
       render: (x) => (<span>{dateFormat(x)}</span>),
-      sorter: (a, b) => a.createdDate.length - b.createdDate.length,
+      sorter: (a, b) => a.createdDate - b.createdDate,
     },
     {
       title: "Status",
@@ -99,7 +98,7 @@ export const Units = () => {
           {!x && (<span className="badge badge-linedanger">InActive</span>)}
         </div>
       ),
-      sorter: (a, b) => a.status.length - b.status.length,
+      sorter: (a, b) => a.status - b.status,
     },
     {
       title: "Actions",
@@ -189,11 +188,11 @@ export const Units = () => {
   //Search Engine
   const searchEngine = (action, key) => {
     if (action === "newest") {
-      setDataSource(postData.sort((a, b) => a.uom - b.uom)
+      setDataSource(postData.sort((a, b) => a.uom.length - b.uom.length)
         .slice(0, postData.length));
     }
     else if (action === "oldest") {
-      setDataSource(postData.sort((a, b) => b.uom - a.uom)
+      setDataSource(postData.sort((a, b) => b.uom.length - a.uom.length)
         .slice(0, postData.length));
     }
     else if (action === "filter") {
@@ -242,17 +241,6 @@ export const Units = () => {
   const handleInsert = () => {
     setInsertMode(true);
   }
-
-  const navigate = useNavigate();
-  const val = localStorage.getItem("userID");
-  useEffect(() => {
-    if (isNaN(val) || !Number.isInteger(Number(val)) || Number(val) <= 0)
-      navigate(route.signin);
-    else
-      setUserId(val);
-  }, [navigate]);
-  if (isNaN(val) || !Number.isInteger(Number(val)) || Number(val) <= 0)
-    return null;
 
   return (
     <>
@@ -442,7 +430,7 @@ export const Units = () => {
           </div>
           {/* /product list */}
         </div>
-        <AddUnit userId={userId} insertMode={insertMode} setInsertMode={setInsertMode} />
+        <AddUnit userId={loginUser?.userId} insertMode={insertMode} setInsertMode={setInsertMode} />
         <EditUnit id={getInvId} isEditMode={getEditMode} setEditMode={setEditMode} />
       </div>
     </>

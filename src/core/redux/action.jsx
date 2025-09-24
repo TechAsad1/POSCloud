@@ -279,7 +279,7 @@ export const insertUnit = (x) => async (dispatch) => {
 export const updateUnitVar = "UpdateUnit";
 export const updateUnit = (id, x) => async (dispatch) => {
   try {
-    const temp = { _Name: x.name, desc: x.desc, isActive: x.isActive };
+    const temp = { _Name: x.name, isActive: x.isActive };
     const response = await axios.put(unitUrl + `/${id}`, temp);
     dispatch({ type: updateUnitVar, payload: response.data });
   } catch (error) {
@@ -347,79 +347,6 @@ export const deleteProduct = (id) => async (dispatch) => {
   } catch (error) {
     dispatch({ type: FetchErr, payload: error.message });
   }
-};
-//Cart
-export const addToCartVar = "AddToCart";
-export const addToCart = (row) => (dispatch) => {
-  let uom = "";
-  row.map((x) => {
-    if (x.maxUom)
-      uom = x.maxUom;
-    else
-      uom = x.minUom;
-    const temp = { id: x.productId, img: x.imageName, name: x.productName, minUom: x.minUom, maxUom: x.maxUom, uom: uom, factor: x.factor, qty: 1, gstPerc: 0, gst: 0, discPerc: 0, disc: 0, price: x.purchasePrice, total: x.purchasePrice, netTotal: x.purchasePrice, orignalPrice: x.purchasePrice, costPrice: x.purchasePrice };
-    dispatch({ type: addToCartVar, payload: temp });
-  });
-};
-export const addToSaleCart = (row) => (dispatch) => {
-  row.map((x) => {
-    const temp = { id: x.productId, img: x.imageName, name: x.productName, minUom: x.minUom, maxUom: x.maxUom, uom: x.minUom, factor: x.factor, qty: 1, gstPerc: 0, gst: 0, discPerc: 0, disc: 0, price: x.salePrice, total: x.salePrice, netTotal: x.salePrice, orignalPrice: x.purchasePrice, costPrice: 0 };
-    dispatch({ type: addToCartVar, payload: temp });
-  });
-};
-
-export const changeUnitCartRowVar = "ChangeUnitCartRow";
-export const changeUnitCartRow = (_id, _unit) => (dispatch) => {
-  dispatch({ type: changeUnitCartRowVar, id: _id, unit: _unit });
-}
-
-export const removeCartRowVar = "RemoveCartRow";
-export const removeCartRow = (id) => (dispatch) => {
-  dispatch({ type: removeCartRowVar, payload: id });
-}
-export const clearCartVar = "ClearCart";
-export const clearCart = () => (dispatch) => {
-  dispatch({ type: clearCartVar, payload: null });
-}
-export const incrementVar = "Increment";
-export const incrementCart = (id) => (dispatch) => {
-  dispatch({ type: incrementVar, payload: id });
-};
-export const decrementVar = "Decrement";
-export const decrementCart = (id) => (dispatch) => {
-  dispatch({ type: decrementVar, payload: id });
-};
-export const rowGstVar = "RowGst";
-export const rowGstCart = (id, _num) => (dispatch) => {
-  dispatch({ type: rowGstVar, payload: id, num: _num });
-};
-export const rowDiscVar = "RowDisc";
-export const rowDiscCart = (id, _num) => (dispatch) => {
-  dispatch({ type: rowDiscVar, payload: id, num: _num });
-};
-export const discountVar = "Discount";
-export const discountCart = (val) => (dispatch) => {
-  dispatch({ type: discountVar, payload: val });
-};
-export const rowPriceVar = "RowPrice";
-export const rowPriceCart = (id, _num) => (dispatch) => {
-  dispatch({ type: rowPriceVar, payload: id, num: _num });
-};
-export const netTotalVar = "NetTotal";
-export const netTotalCart = (val) => (dispatch) => {
-  dispatch({ type: netTotalVar, payload: val });
-};
-export const paymentModeVar = "PaymentMode";
-export const paymentModeCart = (val) => (dispatch) => {
-  dispatch({ type: paymentModeVar, payload: val });
-};
-export const UpdateCartRowVar = "UpdateCartRow";
-export const updateCartRow = (id, _unit, _price, _gstPerc, _gst, _discPerc, _disc, _total, _netTotal) => (dispatch) => {
-  dispatch({ type: UpdateCartRowVar, payload: id, unit: _unit, price: _price, gstPerc: _gstPerc, gst: _gst, discPerc: _discPerc, disc: _disc, total: _total, netTotal: _netTotal });
-};
-export const gstVar = "GST";
-export const gstCart = (val) => (dispatch) => {
-  dispatch({ type: gstVar, payload: val });
 };
 //Customer
 const customerUrl = mainUrl + "Customer";
@@ -739,7 +666,7 @@ export const getTransactionByRID = (id, acc) => async (dispatch) => {
   }
 };
 //Client
-const clientUrl = "http://localhost:5057/api/" + "Client";
+const clientUrl = mainUrl + "Client";
 export const getClientVar = "ClientList";
 export const getClient = () => async (dispatch) => {
   dispatch({ type: FetchLoader });
@@ -791,7 +718,7 @@ export const deleteClient = (id) => async (dispatch) => {
   }
 };
 //Branch
-const branchUrl = "http://localhost:5057/api/" + "Branch";
+const branchUrl = mainUrl + "Branch";
 export const getBranchVar = "BranchList";
 export const getBranch = () => async (dispatch) => {
   dispatch({ type: FetchLoader });
@@ -878,6 +805,7 @@ export const updateUsersVar = "UpdateUsers";
 export const updateUsers = (id, x, path) => async (dispatch) => {
   try {
     const temp = { _Name: x.name, loginId: x.email, contact: x.contact, userRole: x.userRole, passwords: x.password, imageName: path };
+    console.log(x);
     const response = await axios.put(usersUrl + `/${id}`, temp);
     dispatch({ type: updateUsersVar, payload: response.data });
   } catch (error) {
@@ -898,6 +826,108 @@ export const deleteUsers = (id) => async (dispatch) => {
 export const invIDVar = "InvID";
 export const setInvID = (val) => (dispatch) => {
   dispatch({ type: invIDVar, payload: val });
+};
+
+
+//Cart
+//Purchase
+export const addToCartVar = "AddToCart";
+export const addToCart = (row) => (dispatch) => {
+  let uom = "";
+  let _price = 0;
+  let singleUnitPrice = 0;
+  row.map((x) => {
+    if (x.maxUom)
+      uom = x.maxUom;
+    else
+      uom = x.minUom;
+    _price = x.purchasePrice * x.factor;
+    singleUnitPrice = _price / x.factor;
+    const temp = { id: x.productId, img: x.imageName, name: x.productName, minUom: x.minUom, maxUom: x.maxUom, uom: uom, factor: x.factor, qty: 1, gstPerc: 0, gst: 0, discPerc: 0, disc: 0, price: _price, total: _price, netTotal: _price, orignalPrice: x.purchasePrice, costPrice: singleUnitPrice };
+    dispatch({ type: addToCartVar, payload: temp });
+  });
+};
+//Sale
+export const addToSaleCart = (row) => (dispatch) => {
+  let _price = 0;
+  row.map((x) => {
+    _price = x.salePrice;
+    const temp = { id: x.productId, img: x.imageName, name: x.productName, minUom: x.minUom, maxUom: x.maxUom, uom: x.minUom, factor: x.factor, qty: 1, gstPerc: 0, gst: 0, discPerc: 0, disc: 0, price: _price, total: _price, netTotal: _price, orignalPrice: _price, costPrice: _price };
+    dispatch({ type: addToCartVar, payload: temp });
+  });
+};
+//Sale without pics
+export const addToSaleCartWithoutPics = (row) => (dispatch) => {
+  let _price = 0;
+  row.map((x) => {
+    _price = x.consumerPrice;
+    const temp = { id: x.productId, img: x.imageName, name: x.productName, minUom: x.minUom, maxUom: x.maxUom, uom: x.minUom, factor: x.factor, qty: 1, gstPerc: 0, gst: 0, discPerc: 0, disc: 0, price: _price, total: _price, netTotal: _price, orignalPrice: _price, costPrice: _price };
+    dispatch({ type: addToCartVar, payload: temp });
+  });
+};
+export const changeUnitCartRowVar = "ChangeUnitCartRow";
+export const changeUnitCartRow = (unit, index) => (dispatch) => {
+  dispatch({ type: changeUnitCartRowVar, payload: { unit, index } });
+};
+export const removeCartRowVar = "RemoveCartRow";
+export const removeCartRow = (index) => (dispatch) => {
+  dispatch({ type: removeCartRowVar, payload: index });
+};
+export const clearCartVar = "ClearCart";
+export const clearCart = () => (dispatch) => {
+  dispatch({ type: clearCartVar, payload: null });
+};
+export const qty_KeyDownVar = "QtyChanged";
+export const qty_KeyDownCart = (qty, index) => (dispatch) => {
+  dispatch({ type: qty_KeyDownVar, payload: { qty, index } });
+};
+export const qty_LeaveVar = "QtyLeave";
+export const qty_LeaveCart = (qty, index) => (dispatch) => {
+  dispatch({ type: qty_LeaveVar, payload: { qty, index } });
+};
+export const incrementVar = "Increment";
+export const incrementCart = (index) => (dispatch) => {
+  dispatch({ type: incrementVar, payload: { index } });
+};
+export const decrementVar = "Decrement";
+export const decrementCart = (index) => (dispatch) => {
+  dispatch({ type: decrementVar, payload: { index } });
+};
+export const rowGstVar = "RowGst";
+export const rowGstCart = (num, index) => (dispatch) => {
+  dispatch({ type: rowGstVar, payload: { num, index } });
+};
+export const rowDiscVar = "RowDisc";
+export const rowDiscCart = (num, index) => (dispatch) => {
+  dispatch({ type: rowDiscVar, payload: { num, index } });
+};
+export const discountVar = "Discount";
+export const discountCart = (val) => (dispatch) => {
+  dispatch({ type: discountVar, payload: val });
+};
+export const rowPriceVar = "RowPrice";
+export const rowPriceCart = (num, index) => (dispatch) => {
+  dispatch({ type: rowPriceVar, payload: { num, index } });
+};
+export const rowPrice_LeaveVar = "RowPrice_Leave";
+export const rowPrice_Leave = (num, index) => (dispatch) => {
+  dispatch({ type: rowPrice_LeaveVar, payload: { num, index } });
+};
+export const netTotalVar = "NetTotal";
+export const netTotalCart = (val) => (dispatch) => {
+  dispatch({ type: netTotalVar, payload: val });
+};
+export const paymentModeVar = "PaymentMode";
+export const paymentModeCart = (val) => (dispatch) => {
+  dispatch({ type: paymentModeVar, payload: val });
+};
+export const UpdateCartRowVar = "UpdateCartRow";
+export const updateCartRow = (id, _unit, _price, _gstPerc, _gst, _discPerc, _disc, _total, _netTotal) => (dispatch) => {
+  dispatch({ type: UpdateCartRowVar, payload: id, unit: _unit, price: _price, gstPerc: _gstPerc, gst: _gst, discPerc: _discPerc, disc: _disc, total: _total, netTotal: _netTotal });
+};
+export const gstVar = "GST";
+export const gstCart = (val) => (dispatch) => {
+  dispatch({ type: gstVar, payload: val });
 };
 
 

@@ -10,14 +10,15 @@ import Chart from "react-apexcharts";
 import OverlayTrigger from "react-bootstrap/OverlayTrigger";
 import "bootstrap-daterangepicker/daterangepicker.css";
 import ImageWithBasePath from "../../core/img/imagewithbasebath";
-import { Link, useNavigate } from "react-router-dom";
-import { getProduct, getPurchaseInv, getSale, getSaleInv, getTransaction, getUsers, setToogleHeader } from "../../core/redux/action";
+import { Link } from "react-router-dom";
+import { getProduct, getPurchaseInv, getSale, getSaleInv, getTransaction, setToogleHeader } from "../../core/redux/action";
 import { useDispatch, useSelector } from "react-redux";
 import { Tooltip } from "react-bootstrap";
 import { all_routes } from "../../Router/all_routes";
 import DateRangePicker from "react-bootstrap-daterangepicker";
 import moment from "moment";
 import { dateFormat, formatCurrency, getImageFromUrl } from "../../helper/helpers";
+import { useLoginData } from "../../helper/loginUserData";
 
 
 const SalesDashbaord = () => {
@@ -29,14 +30,10 @@ const SalesDashbaord = () => {
   const stock = useSelector((state) => state.posts);
   const saleInv = useSelector((state) => state.saleInv) || [];
   const trInvs = useSelector((state) => state.trInv);
-  const users = useSelector((state) => state.users);
-  const [loginUser, setLoginUser] = useState(null);
   const purchaseInv = useSelector((state) => state.purchaseInv);
+  const loginUser = useLoginData();
 
   const [dates, setDates] = useState({ start: moment().subtract(8, 'days').startOf('day').toDate(), end: moment() });
-  // const [saleRows, setSaleRows] = useState([]);
-
-  // const [recent, setRecent] = useState([]);
 
   const renderRefreshTooltip = (props) => (
     <Tooltip id="refresh-tooltip" {...props}>
@@ -133,7 +130,6 @@ const SalesDashbaord = () => {
     dispatch(getSale());
     dispatch(getProduct());
     dispatch(getTransaction());
-    dispatch(getUsers());
     dispatch(getPurchaseInv());
   }, [dispatch]);
 
@@ -218,17 +214,6 @@ const SalesDashbaord = () => {
         return acc;
       }, {})
   ).sort((a, b) => b.qty - a.qty).slice(0, 5);
-
-  const navigate = useNavigate();
-  const val = localStorage.getItem("userID");
-  useEffect(() => {
-    if (!isNaN(val) && Number.isInteger(Number(val)) && Number(val) > 0) {
-      const id = Number(val);
-      setLoginUser(users.find((i) => i.userId === id));
-    }
-    else
-      navigate(route.signin);
-  }, [users, navigate]);
 
   return (
     <>

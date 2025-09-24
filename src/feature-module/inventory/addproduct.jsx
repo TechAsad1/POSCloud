@@ -56,7 +56,6 @@ const AddProduct = () => {
 
   const [unitList, setUnitList] = useState([{ value: "Choose Uom", label: "Choose Uom" }]);
   const [selectMinUom, setSelectMinUom] = useState(unitList[0]);
-
   const [selectMaxUom, setSelectMaxUom] = useState(unitList[0]);
 
   //Ref
@@ -65,6 +64,14 @@ const AddProduct = () => {
   const sPriceRef = useRef();
   const picRef = useRef();
   const factorRef = useRef();
+  const barcodeRef = useRef();
+  const skuRef = useRef();
+  const descRef = useRef();
+  const consumerRef = useRef();
+  const discPercRef = useRef();
+  const discRef = useRef();
+  const gstPercRef = useRef();
+  const gstRef = useRef();
 
   useEffect(() => {
     dispatch(getCategory());
@@ -185,19 +192,27 @@ const AddProduct = () => {
     return Object.keys(tempErrors).length === 0;
   };
   //Submit
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async () => {
     if (validate()) {
       if (getIsImageChange) {
         const path = await uploadImage(getImgFile);
         dispatch(insertProduct(formData, path));
-        clearForm(e.target);
       }
-      else {
-        //Empty Image
+      else
         dispatch(insertProduct(formData, ""));
-        clearForm(e.target);
-      }
+      barcodeRef.current.value = "";
+      skuRef.current.value = "";
+      nameRef.current.value = "";
+      factorRef.current.value = "0";
+      descRef.current.value = "";
+      cPriceRef.current.value = "0";
+      sPriceRef.current.value = "0";
+      consumerRef.current.value = "0";
+      discPercRef.current.value = "0";
+      discRef.current.value = "0";
+      gstPercRef.current.value = "0";
+      gstRef.current.value = "0";
+      setFormData({ ...formData, name: "", categoryId: 0, minUom: "", maxUom: "", cPrice: 0, sPrice: 0 });
       successAlert(null);
     }
   };
@@ -253,7 +268,7 @@ const AddProduct = () => {
   const handleMaxUom = (e) => {
     setFormData({ ...formData, maxUom: e })
     setSelectMaxUom(unitList.find((x) => x.value === e));
-  }
+  };
   const addEmptyCartImg = () => {
     if (getImage) {
       picRef.current.style.backgroundImage = `url(${getImage})`;
@@ -261,47 +276,12 @@ const AddProduct = () => {
       picRef.current.style.backgroundPosition = "center";
       picRef.current.style.width = "120px";
     }
-  }
+  };
   const removeEmptyCartImg = () => {
     picRef.current.style.backgroundImage = "none";
-  }
-  //Clear
-  const clearForm = (e) => {
-    setErrors({ ...errors, name: "", category: "", minUom: "", cPrice: "", sPrice: "", factor: "", maxUom: "" });
-    nameRef.current.classList.remove("is-invalid");
-    cPriceRef.current.classList.remove("is-invalid");
-    sPriceRef.current.classList.remove("is-invalid");
-    setFormData({ ...formData, name: "", barcode: "", categoryId: 0, brandId: 0, sku: "", minUom: "", maxUom: "" });
-    handleRemoveProduct();
-    setSelectCategory(catList[0]);
-    setSelectBrand(brandList[0]);
-    setSelectMinUom(unitList[0]);
-    setSelectMaxUom(unitList[0]);
-    e[0].value = "";
-    e[1].value = "";
-    e[2].value = "";
-    e[7].value = "";
-    e[8].value = "";
-    e[9].value = "";
-    e[10].value = "";
-    e[11].value = "";
-    e[12].value = "";
-    e[14].value = "";
-    e[15].value = "";
-  }
+  };
 
   const toNum = (val) => parseFloat(val) || 0;
-
-  const setDiscount = (num) => {
-    let _discPerc = toNum(formData.discPerc);
-    let _disc = toNum(formData.disc);
-    if (_discPerc > 0)
-      _disc = (num * _discPerc) / 100;
-    else
-      _discPerc = (_disc / num) * 100;
-    setFormData({ ...formData, discPerc: _discPerc });
-    return _disc;
-  }
   const setGst = (num) => {
     let _gstPerc = toNum(formData.gstPerc);
     let _gst = toNum(formData.gst);
@@ -312,43 +292,12 @@ const AddProduct = () => {
     setFormData({ ...formData, gstPerc: _gstPerc });
     return _gst;
   }
-
   const consumer_KeyDown = (consumerPrice) => {
-    let _consumerPrice = toNum(consumerPrice);
-    let _sPrice = 0;
-    let _disc = 0;
-    let _gst = 0;
-    _disc = setDiscount(_consumerPrice);
-    _gst = setGst(_consumerPrice);
-    _sPrice = _consumerPrice - _disc + _gst;
-    if (_consumerPrice > 0)
-      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _sPrice, disc: _disc, gst: _gst });
-    else
-      setFormData({ ...formData, consumerPrice: consumerPrice, sPrice: _sPrice, disc: _disc, gst: _gst });
+    setFormData({ ...formData, consumerPrice: consumerPrice });
   }
-
   const salePrice_KeyDown = (salePrice) => {
-    let _salePrice = toNum(salePrice);
-    let _consumerPrice = 0;
-    let _discPerc = toNum(formData.discPerc);
-    let _gstPerc = toNum(formData.gstPerc);
-    let _disc = toNum(formData.disc);
-    let _gst = toNum(formData.gst);
-
-    if (!(_discPerc > 0)) {
-      _disc = setDiscount(_salePrice);
-    }
-    if (!(_gstPerc > 0)) {
-      _gst = setGst(_salePrice);
-    }
-
-    _consumerPrice = _salePrice + _disc + _gst;
-    if (_salePrice > 0)
-      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, disc: _disc, gst: _gst });
-    else
-      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: salePrice, disc: _disc, gst: _gst });
+    setFormData({ ...formData, sPrice: salePrice });
   }
-
   const discPerc_KeyDown = (discPerc) => {
     let _discPerc = toNum(discPerc);
     let _consumerPrice = toNum(formData.consumerPrice);
@@ -359,19 +308,20 @@ const AddProduct = () => {
     if (_consumerPrice > 0) {
       _disc = (_discPerc * _consumerPrice) / 100;
       _gst = setGst(_consumerPrice);
-      _salePrice = _consumerPrice - _disc + _gst;
+      _salePrice = (_consumerPrice - _disc + _gst).toFixed(2);
     }
     else {
       _disc = (_discPerc * _salePrice) / 100;
       _gst = setGst(_salePrice);
-      _consumerPrice = _salePrice + _disc + _gst;
+      _consumerPrice = (_salePrice + _disc + _gst).toFixed(2);
     }
+    _disc = _disc.toFixed(2);
+    _gst = _gst.toFixed(2);
     if (_discPerc > 0)
       setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, discPerc: _discPerc, disc: _disc, gst: _gst });
     else
       setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, discPerc: discPerc, disc: _disc, gst: _gst });
   }
-
   const disc_KeyDown = (disc) => {
     let _disc = toNum(disc);
     let _consumerPrice = toNum(formData.consumerPrice);
@@ -382,66 +332,63 @@ const AddProduct = () => {
     if (_consumerPrice > 0) {
       _discPerc = (_disc / _consumerPrice) * 100;
       _gst = setGst(_consumerPrice);
-      _salePrice = _consumerPrice - _disc + _gst;
+      _salePrice = (_consumerPrice - _disc + _gst).toFixed(2);
     }
     else {
       _discPerc = (_disc / _salePrice) * 100;
       _gst = setGst(_salePrice);
-      _consumerPrice = _salePrice + _disc + _gst;
+      _consumerPrice = (_salePrice + _disc + _gst).toFixed(2);
     }
+    _discPerc = _discPerc.toFixed(2);
+    _gst = _gst.toFixed(2);
     if (_disc > 0)
       setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, discPerc: _discPerc, disc: _disc, gst: _gst });
     else
       setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, discPerc: _discPerc, disc: disc, gst: _gst });
   }
-
   const gstPerc_KeyDown = (gstPerc) => {
     let _gstPerc = toNum(gstPerc);
     let _consumerPrice = toNum(formData.consumerPrice);
     let _salePrice = toNum(formData.sPrice);
+    let _disc = toNum(formData.disc);
     let _gst = 0;
-    let _disc = 0;
 
     if (_consumerPrice > 0) {
       _gst = (_gstPerc * _consumerPrice) / 100;
-      _disc = setDiscount(_consumerPrice);
-      _salePrice = _consumerPrice - _disc + _gst;
+      _salePrice = (_consumerPrice - _disc + _gst).toFixed(2);
     }
     else {
       _gst = (_gstPerc * _salePrice) / 100;
-      _disc = setDiscount(_salePrice);
-      _consumerPrice = _salePrice + _disc + _gst;
+      _consumerPrice = (_salePrice + _disc + _gst).toFixed(2);
     }
+    _gst = _gst.toFixed(2);
     if (_gstPerc > 0)
-      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, gstPerc: _gstPerc, disc: _disc, gst: _gst });
+      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, gstPerc: _gstPerc, gst: _gst });
     else
-      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, gstPerc: gstPerc, disc: _disc, gst: _gst });
+      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, gstPerc: gstPerc, gst: _gst });
   }
-
   const gst_KeyDown = (gst) => {
     let _gst = toNum(gst);
     let _consumerPrice = toNum(formData.consumerPrice);
     let _salePrice = toNum(formData.sPrice);
+    let _disc = toNum(formData.disc);
     let _gstPerc = 0;
-    let _disc = 0;
 
     if (_consumerPrice > 0) {
       _gstPerc = (_gst / _consumerPrice) * 100;
-      _disc = setDiscount(_consumerPrice);
-      _salePrice = _consumerPrice - _disc + _gst;
+      _salePrice = (_consumerPrice - _disc + _gst).toFixed(2);
     }
     else {
       _gstPerc = (_gst / _salePrice) * 100;
-      _disc = setDiscount(_salePrice);
-      _consumerPrice = _salePrice + _disc + _gst;
+      _consumerPrice = (_salePrice + _disc + _gst).toFixed(2);
     }
+    _gstPerc = _gstPerc.toFixed(2);
     if (_gst > 0)
-      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, gstPerc: _gstPerc, disc: _disc, gst: _gst });
+      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, gstPerc: _gstPerc, gst: _gst });
     else
-      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, gstPerc: _gstPerc, disc: _disc, gst: gst });
+      setFormData({ ...formData, consumerPrice: _consumerPrice, sPrice: _salePrice, gstPerc: _gstPerc, gst: gst });
   }
 
-  console.log("!");
   const navigate = useNavigate();
   const val = localStorage.getItem("userID");
   useEffect(() => {
@@ -492,27 +439,205 @@ const AddProduct = () => {
             </li>
           </ul>
         </div>
-        <span>!</span>
         {/* /add */}
-        <form onSubmit={handleSubmit} className="needs-validation">
-          <div className="card">
-            <div className="card-body add-product pb-0">
-              <div
-                className="accordion-card-one accordion"
-                id="accordionExample"
-              >
-                <div className="accordion-item">
-                  <div className="accordion-header" id="headingOne">
-                    <div
-                      className="accordion-button"
-                      data-bs-toggle="collapse"
-                      data-bs-target="#collapseOne"
-                      aria-controls="collapseOne"
-                    >
-                      <div className="addproduct-icon">
+        <div className="card">
+          <div className="card-body add-product pb-0">
+            <div
+              className="accordion-card-one accordion"
+              id="accordionExample"
+            >
+              <div className="accordion-item">
+                <div className="accordion-header" id="headingOne">
+                  <div
+                    className="accordion-button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapseOne"
+                    aria-controls="collapseOne"
+                  >
+                    <div className="addproduct-icon">
+                      <h5>
+                        <Info className="add-info" />
+                        <span>Product Information</span>
+                      </h5>
+                      <Link to="#">
+                        <ChevronDown className="chevron-down-add" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  id="collapseOne"
+                  className="accordion-collapse collapse show"
+                  aria-labelledby="headingOne"
+                  data-bs-parent="#accordionExample"
+                >
+                  <div className="accordion-body">
+                    <div className="row">
+                      <div className="col-lg-4 col-sm-6 col-12">
+                        <div className="mb-3 add-product">
+                          <label className="form-label">Product Name</label>
+                          <input type="text" className="form-control" ref={nameRef} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
+                          {errors.name && <p className="invalid-feedback">{errors.name}</p>}
+                        </div>
+                      </div>
+                      <div className="col-lg-4 col-sm-6 col-12">
+                        <div className="mb-3">
+                          <label className="form-label">Barcode</label>
+                          <input type="text" className="form-control" ref={barcodeRef} onChange={(e) => setFormData({ ...formData, barcode: e.target.value })} />
+                        </div>
+                      </div>
+                      <div className="col-lg-4 col-sm-6 col-12">
+                        <div className="input-blocks add-product list">
+                          <label>SKU</label>
+                          <input
+                            type="text"
+                            className="form-control list"
+                            placeholder="Enter SKU"
+                            onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                            ref={skuRef}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="add-product-new">
+                      <div className="row">
+                        {/* Category */}
+                        <div className="col-lg-6 col-sm-6 col-12">
+                          <div className="mb-3 add-product is-invalid">
+                            <div className="add-newplus">
+                              <label className="form-label">Category</label>
+                              <Link
+                                to="#"
+                                data-bs-toggle="modal"
+                                data-bs-target="#add-units-category"
+                              >
+                                <PlusCircle className="plus-down-add" />
+                                <span>Add New</span>
+                              </Link>
+                            </div>
+                            <Select
+                              classNamePrefix="react-select"
+                              options={catList}
+                              placeholder="Choose Category"
+                              onChange={handleCategory}
+                              value={selectCategory}
+                              required
+                            />
+                            {errors.category && <span style={{ color: "#ff7f7f" }}>{errors.category}</span>}
+                          </div>
+                        </div>
+                        {/* Brand */}
+                        <div className="col-lg-6 col-sm-6 col-12">
+                          <div className="mb-3 add-product">
+                            <div className="add-newplus">
+                              <label className="form-label">Brand</label>
+                              <Link
+                                to="#"
+                                data-bs-toggle="modal"
+                                data-bs-target="#add-units-brand"
+                              >
+                                <PlusCircle className="plus-down-add" />
+                                <span>Add New</span>
+                              </Link>
+                            </div>
+                            <Select
+                              classNamePrefix="react-select"
+                              options={brandList}
+                              placeholder="Choose Brand"
+                              onChange={handleBrand}
+                              value={selectBrand}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="row">
+
+                        {/* Unit */}
+                        <div className="col-lg-4 col-sm-6 col-12">
+                          <div className="mb-3 add-product">
+                            <div className="add-newplus">
+                              <label className="form-label">MinUom</label>
+                              <Link
+                                to="#"
+                                data-bs-toggle="modal"
+                                data-bs-target="#add-unit"
+                              >
+                                <PlusCircle className="plus-down-add" />
+                                <span>Add New</span>
+                              </Link>
+                            </div>
+                            <Select
+                              classNamePrefix="react-select"
+                              options={unitList}
+                              placeholder="Choose MinUom"
+                              onChange={handleMinUom}
+                              value={selectMinUom}
+                              required
+                            />
+                            {errors.minUom && <span style={{ color: "#ff7f7f" }}>{errors.minUom}</span>}
+                          </div>
+                        </div>
+
+                        <div className="col-lg-4 col-sm-6 col-12">
+                          <div className="mb-3 add-product">
+                            <label className="form-label">MaxUom</label>
+                            <Select
+                              classNamePrefix="react-select"
+                              options={unitList}
+                              placeholder="Choose MaxUom"
+                              onChange={(e) => handleMaxUom(e.value)}
+                              value={selectMaxUom}
+                            />
+                          </div>
+                          {errors.maxUom && <span style={{ color: "#ff7f7f" }}>{errors.maxUom}</span>}
+                        </div>
+
+                        <div className="col-lg-4 col-sm-6 col-12">
+                          <div className="mb-3 add-product">
+                            <label className="form-label">Factor#</label>
+                            <input type="number" className="form-control" placeholder="factor" ref={factorRef} defaultValue={0} onChange={(e) => setFormData({ ...formData, factor: e.target.value })} />
+                            {errors.factor && <span style={{ color: "#ff7f7f" }}>{errors.factor}</span>}
+                          </div>
+                        </div>
+
+                      </div>
+                    </div>
+                    {/* Editor Description */}
+                    <div className="col-lg-12">
+                      <div className="input-blocks summer-description-box transfer mb-3">
+                        <label>Description</label>
+                        <textarea
+                          className="form-control h-100"
+                          rows={5}
+                          defaultValue={""}
+                          onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
+                          ref={descRef}
+                        />
+                        <p className="mt-1">Maximum 60 Characters</p>
+                      </div>
+                    </div>
+                    {/* /Editor */}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              className="accordion-card-one accordion"
+              id="accordionExample2"
+            >
+              <div className="accordion-item">
+                <div className="accordion-header" id="headingTwo">
+                  <div
+                    className="accordion-button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#collapseTwo"
+                    aria-controls="collapseTwo"
+                  >
+                    <div className="text-editor add-list">
+                      <div className="addproduct-icon list icon">
                         <h5>
-                          <Info className="add-info" />
-                          <span>Product Information</span>
+                          <LifeBuoy className="add-info" />
+                          <span>Pricing &amp; Stocks</span>
                         </h5>
                         <Link to="#">
                           <ChevronDown className="chevron-down-add" />
@@ -520,307 +645,121 @@ const AddProduct = () => {
                       </div>
                     </div>
                   </div>
-                  <div
-                    id="collapseOne"
-                    className="accordion-collapse collapse show"
-                    aria-labelledby="headingOne"
-                    data-bs-parent="#accordionExample"
-                  >
-                    <div className="accordion-body">
-                      <div className="row"></div>
-                      <div className="row">
-                        <div className="col-lg-4 col-sm-6 col-12">
-                          <div className="mb-3 add-product">
-                            <label className="form-label">Product Name</label>
-                            <input type="text" className="form-control" ref={nameRef} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required />
-                            {errors.name && <p className="invalid-feedback">{errors.name}</p>}
-                          </div>
-                        </div>
-                        <div className="col-lg-4 col-sm-6 col-12">
-                          <div className="mb-3">
-                            <label className="form-label">Barcode</label>
-                            <input type="text" className="form-control" onChange={(e) => setFormData({ ...formData, barcode: e.target.value })} />
-                          </div>
-                        </div>
-                        <div className="col-lg-4 col-sm-6 col-12">
-                          <div className="input-blocks add-product list">
-                            <label>SKU</label>
-                            <input
-                              type="text"
-                              className="form-control list"
-                              placeholder="Enter SKU"
-                              onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
-                            />
-                            <Link
-                              to={route.addproduct}
-                              className="btn btn-primaryadd"
-                            >
-                              Generate Code
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="add-product-new">
-                        <div className="row">
-                          {/* Category */}
-                          <div className="col-lg-6 col-sm-6 col-12">
-                            <div className="mb-3 add-product is-invalid">
-                              <div className="add-newplus">
-                                <label className="form-label">Category</label>
-                                <Link
-                                  to="#"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#add-units-category"
-                                >
-                                  <PlusCircle className="plus-down-add" />
-                                  <span>Add New</span>
-                                </Link>
-                              </div>
-                              <Select
-                                classNamePrefix="react-select"
-                                options={catList}
-                                placeholder="Choose Category"
-                                onChange={handleCategory}
-                                value={selectCategory}
-                                required
-                              />
-                              {errors.category && <span style={{ color: "#ff7f7f" }}>{errors.category}</span>}
-                            </div>
-                          </div>
-                          {/* Brand */}
-                          <div className="col-lg-6 col-sm-6 col-12">
-                            <div className="mb-3 add-product">
-                              <div className="add-newplus">
-                                <label className="form-label">Brand</label>
-                                <Link
-                                  to="#"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#add-units-brand"
-                                >
-                                  <PlusCircle className="plus-down-add" />
-                                  <span>Add New</span>
-                                </Link>
-                              </div>
-                              <Select
-                                classNamePrefix="react-select"
-                                options={brandList}
-                                placeholder="Choose Brand"
-                                onChange={handleBrand}
-                                value={selectBrand}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <div className="row">
-
-                          {/* Unit */}
-                          <div className="col-lg-4 col-sm-6 col-12">
-                            <div className="mb-3 add-product">
-                              <div className="add-newplus">
-                                <label className="form-label">MinUom</label>
-                                <Link
-                                  to="#"
-                                  data-bs-toggle="modal"
-                                  data-bs-target="#add-unit"
-                                >
-                                  <PlusCircle className="plus-down-add" />
-                                  <span>Add New</span>
-                                </Link>
-                              </div>
-                              <Select
-                                classNamePrefix="react-select"
-                                options={unitList}
-                                placeholder="Choose MinUom"
-                                onChange={handleMinUom}
-                                value={selectMinUom}
-                                required
-                              />
-                              {errors.minUom && <span style={{ color: "#ff7f7f" }}>{errors.minUom}</span>}
-                            </div>
-                          </div>
-
-                          <div className="col-lg-4 col-sm-6 col-12">
-                            <div className="mb-3 add-product">
-                              <label className="form-label">Factor#</label>
-                              <input type="number" className="form-control" placeholder="factor" ref={factorRef} defaultValue={0} onChange={(e) => setFormData({ ...formData, factor: e.target.value })} />
-                              {errors.factor && <span style={{ color: "#ff7f7f" }}>{errors.factor}</span>}
-                            </div>
-                          </div>
-
-                          <div className="col-lg-4 col-sm-6 col-12">
-                            <div className="mb-3 add-product">
-                              <label className="form-label">MaxUom</label>
-                              <Select
-                                classNamePrefix="react-select"
-                                options={unitList}
-                                placeholder="Choose MaxUom"
-                                onChange={(e) => handleMaxUom(e.value)}
-                                value={selectMaxUom}
-                              />
-                            </div>
-                            {errors.maxUom && <span style={{ color: "#ff7f7f" }}>{errors.maxUom}</span>}
-                          </div>
-
-                        </div>
-                      </div>
-                      {/* Editor Description */}
-                      <div className="col-lg-12">
-                        <div className="input-blocks summer-description-box transfer mb-3">
-                          <label>Description</label>
-                          <textarea
-                            className="form-control h-100"
-                            rows={5}
-                            defaultValue={""}
-                            onChange={(e) => setFormData({ ...formData, desc: e.target.value })}
-                          />
-                          <p className="mt-1">Maximum 60 Characters</p>
-                        </div>
-                      </div>
-                      {/* /Editor */}
-                    </div>
-                  </div>
                 </div>
-              </div>
-              <div
-                className="accordion-card-one accordion"
-                id="accordionExample2"
-              >
-                <div className="accordion-item">
-                  <div className="accordion-header" id="headingTwo">
-                    <div
-                      className="accordion-button"
-                      data-bs-toggle="collapse"
-                      data-bs-target="#collapseTwo"
-                      aria-controls="collapseTwo"
-                    >
-                      <div className="text-editor add-list">
-                        <div className="addproduct-icon list icon">
-                          <h5>
-                            <LifeBuoy className="add-info" />
-                            <span>Pricing &amp; Stocks</span>
-                          </h5>
-                          <Link to="#">
-                            <ChevronDown className="chevron-down-add" />
-                          </Link>
+                <div
+                  id="collapseTwo"
+                  className="accordion-collapse collapse show"
+                  aria-labelledby="headingTwo"
+                  data-bs-parent="#accordionExample2"
+                >
+                  <div className="accordion-body">
+                    <div className="tab-content" id="pills-tabContent">
+                      <div
+                        className="tab-pane fade show active"
+                        id="pills-home"
+                        role="tabpanel"
+                        aria-labelledby="pills-home-tab"
+                      >
+                        <div className="row">
+                          <div className="col-lg-4 col-sm-6 col-12">
+                            <div className="input-blocks add-product">
+                              <label>Purchase Price</label>
+                              <input type="number" className="form-control" defaultValue="0" ref={cPriceRef} onChange={(e) => setFormData({ ...formData, cPrice: e.target.value })} required />
+                              {errors.cPrice && <p className="invalid-feedback">{errors.cPrice}</p>}
+                            </div>
+                          </div>
+                          <div className="col-lg-4 col-sm-6 col-12">
+                            <div className="input-blocks add-product">
+                              <label>Consumer Price</label>
+                              <input type="number" className="form-control" defaultValue="0" ref={consumerRef} value={formData.consumerPrice} onChange={(e) => consumer_KeyDown(e.target.value)} />
+                            </div>
+                          </div>
+                          <div className="col-lg-4 col-sm-6 col-12">
+                            <div className="input-blocks add-product">
+                              <label>Sale Price</label>
+                              <input type="number" className="form-control" defaultValue="0" value={formData.sPrice} ref={sPriceRef} onChange={(e) => salePrice_KeyDown(e.target.value)} required />
+                              {errors.sPrice && <p className="invalid-feedback">{errors.sPrice}</p>}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div
-                    id="collapseTwo"
-                    className="accordion-collapse collapse show"
-                    aria-labelledby="headingTwo"
-                    data-bs-parent="#accordionExample2"
-                  >
-                    <div className="accordion-body">
-                      <div className="tab-content" id="pills-tabContent">
+                        <div className="row">
+                          <div className="col-lg-3 col-sm-6 col-12">
+                            <div className="input-blocks add-product">
+                              <label>Discount Percent(%)</label>
+                              <input type="number" placeholder="Choose" className="form-control" defaultValue="0" ref={discPercRef} value={formData.discPerc} onChange={(e) => discPerc_KeyDown(e.target.value)} />
+                            </div>
+                          </div>
+                          <div className="col-lg-3 col-sm-6 col-12">
+                            <div className="input-blocks add-product">
+                              <label>Discount Amount</label>
+                              <input type="number" placeholder="Choose" className="form-control" defaultValue="0" ref={discRef} value={formData.disc} onChange={(e) => disc_KeyDown(e.target.value)} />
+                            </div>
+                          </div>
+                          <div className="col-lg-3 col-sm-6 col-12">
+                            <div className="input-blocks add-product">
+                              <label>Gst Percent(%)</label>
+                              <input type="number" className="form-control" ref={gstPercRef} defaultValue="0" value={formData.gstPerc} onChange={(e) => gstPerc_KeyDown(e.target.value)} />
+                            </div>
+                          </div>
+                          <div className="col-lg-3 col-sm-6 col-12">
+                            <div className="input-blocks add-product">
+                              <label>Tax(GST) Amount</label>
+                              <input type="number" className="form-control" ref={gstRef} defaultValue="0" value={formData.gst} onChange={(e) => gst_KeyDown(e.target.value)} />
+                            </div>
+                          </div>
+                        </div>
                         <div
-                          className="tab-pane fade show active"
-                          id="pills-home"
-                          role="tabpanel"
-                          aria-labelledby="pills-home-tab"
+                          className="accordion-card-one accordion"
+                          id="accordionExample3"
                         >
-                          <div className="row">
-                            <div className="col-lg-4 col-sm-6 col-12">
-                              <div className="input-blocks add-product">
-                                <label>Purchase Price</label>
-                                <input type="number" className="form-control" defaultValue="0" ref={cPriceRef} onChange={(e) => setFormData({ ...formData, cPrice: e.target.value })} required />
-                                {errors.cPrice && <p className="invalid-feedback">{errors.cPrice}</p>}
-                              </div>
-                            </div>
-                            <div className="col-lg-4 col-sm-6 col-12">
-                              <div className="input-blocks add-product">
-                                <label>Consumer Price</label>
-                                <input type="number" className="form-control" defaultValue="0" value={formData.consumerPrice} onChange={(e) => consumer_KeyDown(e.target.value)} />
-                              </div>
-                            </div>
-                            <div className="col-lg-4 col-sm-6 col-12">
-                              <div className="input-blocks add-product">
-                                <label>Sale Price</label>
-                                <input type="number" className="form-control" defaultValue="0" value={formData.sPrice} ref={sPriceRef} onChange={(e) => salePrice_KeyDown(e.target.value)} required />
-                                {errors.sPrice && <p className="invalid-feedback">{errors.sPrice}</p>}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="row">
-                            <div className="col-lg-3 col-sm-6 col-12">
-                              <div className="input-blocks add-product">
-                                <label>Discount Percent(%)</label>
-                                <input type="number" placeholder="Choose" className="form-control" defaultValue="0" value={formData.discPerc} onChange={(e) => discPerc_KeyDown(e.target.value)} />
-                              </div>
-                            </div>
-                            <div className="col-lg-3 col-sm-6 col-12">
-                              <div className="input-blocks add-product">
-                                <label>Discount Amount</label>
-                                <input type="number" placeholder="Choose" className="form-control" defaultValue="0" value={formData.disc} onChange={(e) => disc_KeyDown(e.target.value)} />
-                              </div>
-                            </div>
-                            <div className="col-lg-3 col-sm-6 col-12">
-                              <div className="input-blocks add-product">
-                                <label>Gst Percent(%)</label>
-                                <input type="number" className="form-control" defaultValue="0" value={formData.gstPerc} onChange={(e) => gstPerc_KeyDown(e.target.value)} />
-                              </div>
-                            </div>
-                            <div className="col-lg-3 col-sm-6 col-12">
-                              <div className="input-blocks add-product">
-                                <label>Tax(GST) Amount</label>
-                                <input type="number" className="form-control" defaultValue="0" value={formData.gst} onChange={(e) => gst_KeyDown(e.target.value)} />
-                              </div>
-                            </div>
-                          </div>
-                          <div
-                            className="accordion-card-one accordion"
-                            id="accordionExample3"
-                          >
-                            <div className="accordion-item">
+                          <div className="accordion-item">
+                            <div
+                              className="accordion-header"
+                              id="headingThree"
+                            >
                               <div
-                                className="accordion-header"
-                                id="headingThree"
+                                className="accordion-button"
+                                data-bs-toggle="collapse"
+                                data-bs-target="#collapseThree"
+                                aria-controls="collapseThree"
                               >
-                                <div
-                                  className="accordion-button"
-                                  data-bs-toggle="collapse"
-                                  data-bs-target="#collapseThree"
-                                  aria-controls="collapseThree"
-                                >
-                                  <div className="addproduct-icon list">
-                                    <h5>
-                                      <i
-                                        data-feather="image"
-                                        className="add-info"
-                                      />
-                                      <span>Images</span>
-                                    </h5>
-                                    <Link to="#">
-                                      <ChevronDown className="chevron-down-add" />
-                                    </Link>
-                                  </div>
+                                <div className="addproduct-icon list">
+                                  <h5>
+                                    <i
+                                      data-feather="image"
+                                      className="add-info"
+                                    />
+                                    <span>Images</span>
+                                  </h5>
+                                  <Link to="#">
+                                    <ChevronDown className="chevron-down-add" />
+                                  </Link>
                                 </div>
                               </div>
-                              <div
-                                id="collapseThree"
-                                className="accordion-collapse collapse show"
-                                aria-labelledby="headingThree"
-                                data-bs-parent="#accordionExample3"
-                              >
-                                <div className="accordion-body">
-                                  <div className="new-employee-field">
-                                    <div className="profile-pic-upload mb-2">
-                                      <div className="profile-pic" ref={picRef}>
-                                        {!isImageVisible && <span>
-                                          <PlusCircle className="plus-down-add" />
-                                          Product Picture
-                                        </span>}
-                                        {isImageVisible && <Link to="#" style={{ position: "absolute", top: "7px", right: "7px" }}>
-                                          <X className="x-square-add remove-product" onClick={handleRemoveProduct} />
-                                        </Link>}
-                                      </div>
-                                      <div className="input-blocks mb-0">
-                                        <div className="image-upload mb-0">
-                                          <input type="file" accept="image/*" onChange={handleImage} />
-                                          <div className="image-uploads">
-                                            <h4>Change Image</h4>
-                                          </div>
+                            </div>
+                            <div
+                              id="collapseThree"
+                              className="accordion-collapse collapse show"
+                              aria-labelledby="headingThree"
+                              data-bs-parent="#accordionExample3"
+                            >
+                              <div className="accordion-body">
+                                <div className="new-employee-field">
+                                  <div className="profile-pic-upload mb-2">
+                                    <div className="profile-pic" ref={picRef}>
+                                      {!isImageVisible && <span>
+                                        <PlusCircle className="plus-down-add" />
+                                        Product Picture
+                                      </span>}
+                                      {isImageVisible && <Link to="#" style={{ position: "absolute", top: "7px", right: "7px" }}>
+                                        <X className="x-square-add remove-product" onClick={handleRemoveProduct} />
+                                      </Link>}
+                                    </div>
+                                    <div className="input-blocks mb-0">
+                                      <div className="image-upload mb-0">
+                                        <input type="file" accept="image/*" onChange={handleImage} />
+                                        <div className="image-uploads">
+                                          <h4>Change Image</h4>
                                         </div>
                                       </div>
                                     </div>
@@ -837,13 +776,13 @@ const AddProduct = () => {
               </div>
             </div>
           </div>
-          <div className="col-lg-12">
-            <div className="btn-addproduct mb-4">
-              <button type="button" className="btn btn-cancel me-2">Cancel</button>
-              <button type="submit" className="btn btn-submit" onClick={validate}>Save Product</button>
-            </div>
+        </div>
+        <div className="col-lg-12">
+          <div className="btn-addproduct mb-4">
+            <button type="button" className="btn btn-cancel me-2">Cancel</button>
+            <button type="submit" className="btn btn-submit" onClick={handleSubmit}>Insert Product</button>
           </div>
-        </form>
+        </div>
         {/* /add */}
       </div>
       <Addunits userId={userId} />

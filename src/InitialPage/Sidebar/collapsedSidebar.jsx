@@ -297,11 +297,11 @@ const CollapsedSidebar = () => {
                   <span>Warranties</span>
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link to="barcode">
                   <span>Print Barcode</span>
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <Link to="qrcode">
                   <span>Print QR Code</span>

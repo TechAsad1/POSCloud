@@ -1,31 +1,37 @@
 import ImageWithBasePath from '../../core/img/imagewithbasebath'
 import { getImageFromUrl } from '../../helper/helpers';
 import React, { useEffect } from "react";
-import { useSelector } from "react-redux";
-import { all_routes } from "../../Router/all_routes";
-import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from "react-redux";
+// import { all_routes } from "../../Router/all_routes";
+import { useParams } from 'react-router-dom';
+import { getProduct, getUsers } from '../../core/redux/action';
 
 const ProductDetail = () => {
+    const dispatch = useDispatch();
     const posts = useSelector((state) => state.posts);
     const categoryStore = useSelector((state) => state.categories);
     const brandStore = useSelector((state) => state.brands);
-    const id = Number(localStorage.getItem("proID"));
-    const route = all_routes;
-    const navigate = useNavigate();
+    const { id } = useParams();
+    const productId = parseInt(id, 10);
 
-    const data = posts.filter((x) => x.productId === id).map((x) => ({
+    const data = posts.filter((x) => x.productId === productId).map((x) => ({
         ...x,
         categoryName:
             categoryStore.find((i) => i.categoryId === x.categoryId)?.categoryName || "-",
         brandName:
             brandStore.find((i) => i.brandId === x.brandId)?.brandName || "-",
     }));
+
     useEffect(() => {
-    if (data.length === 0)
-            navigate(route.productlist);
-    }, [data]);
-    if (data.length === 0)
-        return null;
+        dispatch(getProduct());
+        dispatch(getUsers());
+    }, [dispatch]);
+    // useEffect(() => {
+    //     if (data.length === 0)
+    //         navigate(route.productlist);
+    // }, [data]);
+    // if (data.length === 0)
+    //     return null;
     const x = data[0];
     return (
         <div>

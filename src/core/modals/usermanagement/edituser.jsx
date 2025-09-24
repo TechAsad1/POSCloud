@@ -1,23 +1,27 @@
 import { PlusCircle, X } from 'feather-icons-react/build/IconComponents'
 import React, { useEffect, useRef, useState } from 'react'
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom'
 import Select from 'react-select'
 import { updateUsers } from '../../redux/action';
 import withReactContent from 'sweetalert2-react-content';
 import Swal from "sweetalert2";
 import { getImageFromUrl, uploadImage } from '../../../helper/helpers';
+import { useLoginData } from '../../../helper/loginUserData';
 
 const EditUser = (p) => {
+    const loginUser = useLoginData();
     const role = [
         { value: "Choose Role", label: "Choose Role" },
         { value: "Admin", label: "Admin" },
         { value: "AcStore Keeper", label: "Store Keeper" },
         { value: "Salesman", label: "Salesman" },
-        { value: "Manager", label: "Manager" },
+        ...(loginUser?.userRole === "SuperAdmin"
+            ? [{ value: "SuperAdmin", label: "SuperAdmin" }]
+            : []),
         { value: "Supervisor", label: "Supervisor" },
-        { value: "SuperAdmin", label: "SuperAdmin" },
         { value: "Store Keeper", label: "Store Keeper" },
+        { value: "Manager", label: "Manager" },
         { value: "Purchase", label: "Purchase" },
         { value: "Delivery Biker", label: "Delivery Biker" },
         { value: "Maintenance", label: "Maintenance" },
@@ -25,11 +29,11 @@ const EditUser = (p) => {
         { value: "Accountant", label: "Accountant" },
     ];
     const dispatch = useDispatch();
-    const users = useSelector((state) => state.users);
     const [getImage, setImage] = useState();
     const [errors, setErrors] = useState({});
     const [getImgFile, setImgFile] = useState(null);
     const [formData, setFormData] = useState({ imgPath: "", name: "", userRole: "", email: "", password: "", rePassword: "", contact: "" });
+    const [formDataForUser, setFormDataForUser] = useState({ imgPath: "", name: "", userRole: "", email: "", contact: "" });
     const [getIsImageChange, setIsImageChange] = useState(false);
     const [isImageVisible, setIsImageVisible] = useState(false);
     //Select
@@ -37,35 +41,45 @@ const EditUser = (p) => {
     //UseRef
     const picRef = useRef();
     const nameRef = useRef();
+    const emailRef = useRef();
+    const passwordRef = useRef();
+    const rePasswordRef = useRef();
+
     useEffect(() => {
         addEmptyCartImg();
     }, [getImage]);
     useEffect(() => {
         if (p.isEditMode) {
-            const x = users.find((i) => i.userId === p.id);
+            const x = p.userRow;
+            handleSelectRole(role.find((i) => i.value === x?.userRole) ?? role[0]);
             setFormData({
                 ...formData,
-                name: x.userName,
-                imgPath: x.img,
-                userRole: x.userRole,
-                email: x.loginId,
-                password: x.passwords,
-                rePassword: x.passwords,
-                contact: x.contact
+                name: x?.userName,
+                userRole: x?.userRole,
+                email: x?.loginId,
+                password: x?.passwords,
+                rePassword: x?.passwords,
+                contact: x?.contact,
             });
-            if (x.img === "" || x.img === null) {
+            setFormDataForUser({
+                ...formDataForUser,
+                name: x?.userName,
+                userRole: x?.userRole,
+                email: x?.loginId,
+                contact: x?.contact,
+                imgPath: x?.imageName
+            });
+            if (!x.img) {
                 setIsImageVisible(false);
                 setImage("");
-            }
-            else {
-                setImage(getImageFromUrl(x.img));
+            } else {
+                setImage(getImageFromUrl(x?.img));
                 setIsImageVisible(true);
             }
-            handleSelectRole(x.userRole);
         }
-    }, [p.isEditMode, users]);
+    }, [p.isEditMode, p.userRow, p.invId]);
 
-    //Image
+    // Image
     const handleRemoveProduct = () => {
         setIsImageVisible(false);
         setIsImageChange(false);
@@ -101,50 +115,55 @@ const EditUser = (p) => {
         picRef.current.style.backgroundImage = "none";
     }
     //Validation
-    const validate = (p) => {
+    const validate = () => {
         let tempErrors = {};
-        if (p.target[1].value === "") {
-            tempErrors.nameErr = "UserName required";
-            nameRef.current.classList.add("is-invalid");
-            setErrors(tempErrors);
+
+        if (nameRef.current.value === "") {
+            tempErrors.nameErr = "Username required";
         }
-        else if (formData.userRole === "") {
-            tempErrors.roleErr = "UserRole required";
-            nameRef.current.classList.remove("is-invalid");
-            setErrors(tempErrors);
+        if (emailRef.current.value === "") {
+            tempErrors.emailErr = "Email required";
         }
-        else if (p.target[5].value === "") {
+        if (formData.userRole === "") {
+            tempErrors.roleErr = "User-Role required";
+        }
+        if (passwordRef.current.value === "") {
             tempErrors.passwordErr = "Password required";
-            setErrors(tempErrors);
         }
-        else if (p.target[6].value === "") {
+        if (rePasswordRef.current.value === "") {
             tempErrors.rePasswordErr = "Confirm password required";
-            setErrors(tempErrors);
         }
-        else if (p.target[5].value != p.target[6].value) {
+        if (passwordRef.current.value !== rePasswordRef.current.value) {
             tempErrors.rePasswordErr = "Confirm password does not match!";
-            setErrors(tempErrors);
         }
-        else
-            setErrors({ ...errors, nameErr: "", passwordErr: "", rePasswordErr: "", roleErr: "" });
+        setErrors(tempErrors);
+        // ✅ true if no errors
         return Object.keys(tempErrors).length === 0;
     };
     //Submit
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (validate(e)) {
-            if (getIsImageChange) {
-                const path = await uploadImage(getImgFile);
-                dispatch(updateUsers(p.id, formData, path));
-            }
-            else {
-                if (isImageVisible) {
-                    dispatch(updateUsers(p.id, formData, formData.imgPath));
+    const handleSubmit = async () => {
+        if (validate()) {
+            if (loginUser.userRole === "SuperAdmin") {
+                if (getIsImageChange) {
+                    const path = await uploadImage(getImgFile);
+                    dispatch(updateUsers(p.invId, formData, path));
                 }
                 else {
-                    //Empty Image
-                    dispatch(updateUsers(p.id, formData, ""));
+                    if (isImageVisible)
+                        dispatch(updateUsers(p.invId, formData, formData.imgPath));
+                    else
+                        dispatch(updateUsers(p.invId, formData, ""));
                 }
+            }
+            else {
+                const temp = {
+                    name: formDataForUser.name,
+                    userRole: formDataForUser.userRole,
+                    email: formDataForUser.email,
+                    contact: formDataForUser.contact,
+                    password: formData.password,
+                };
+                dispatch(updateUsers(p.invId, temp, formDataForUser.imgPath));
             }
             successAlert(null);
         }
@@ -178,7 +197,8 @@ const EditUser = (p) => {
         setConfirmPassword((prevShowPassword) => !prevShowPassword);
     };
     const handleSelectRole = (e) => {
-        setUserRole(role.find((x) => x.value?.toLowerCase() === e?.toLowerCase()));
+        setUserRole(e);
+        setFormData({ ...formData, userRole: e.value })
     }
     return (
         <div>
@@ -203,118 +223,119 @@ const EditUser = (p) => {
                                     </button>
                                 </div>
                                 <div className="modal-body custom-modal-body">
-                                    <form onSubmit={handleSubmit}>
-                                        <div className="row">
-                                            <div className="col-lg-12">
-                                                <div className="new-employee-field">
-                                                    <span>Avatar</span>
-                                                    <div className="profile-pic-upload mb-2">
-                                                        <div className="profile-pic" ref={picRef}>
-                                                            {!isImageVisible && <span>
-                                                                <PlusCircle className="plus-down-add" />
-                                                                Profile Photo
-                                                            </span>}
-                                                            {isImageVisible && <Link to="#" style={{ position: "absolute", top: "7px", right: "7px" }}>
-                                                                <X className="x-square-add remove-product" onClick={handleRemoveProduct} />
-                                                            </Link>}
-                                                        </div>
-                                                        <div className="input-blocks mb-0">
-                                                            <div className="image-upload mb-0">
-                                                                <input type="file" accept="image/*" onChange={handleImage} />
-                                                                <div className="image-uploads">
-                                                                    <h4>Change Image</h4>
-                                                                </div>
+                                    <div className="row">
+                                        <div className="col-lg-12">
+                                            <div className="new-employee-field">
+                                                <span>Avatar</span>
+                                                <div className="profile-pic-upload mb-2">
+                                                    <div className="profile-pic" ref={picRef}>
+                                                        {!isImageVisible && <span>
+                                                            <PlusCircle className="plus-down-add" />
+                                                            Profile Photo
+                                                        </span>}
+                                                        {isImageVisible && <Link to="#" style={{ position: "absolute", top: "7px", right: "7px" }}>
+                                                            <X className="x-square-add remove-product" onClick={handleRemoveProduct} />
+                                                        </Link>}
+                                                    </div>
+                                                    <div className="input-blocks mb-0">
+                                                        <div className="image-upload mb-0">
+                                                            <input type="file" accept="image/*" onChange={handleImage} />
+                                                            <div className="image-uploads">
+                                                                <h4>Change Image</h4>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div className="col-lg-6">
-                                                <div className="input-blocks">
-                                                    <label>User Name</label>
-                                                    <input type="text" readOnly className={"form-control " + (errors.nameErr ? "is-invalid" : "")} ref={nameRef} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-                                                    {errors.nameErr && <p style={{ color: "#ff7676" }}>{errors.nameErr}</p>}
-                                                </div>
+                                        </div>
+                                        <div className="col-lg-6">
+                                            <div className="input-blocks">
+                                                <label>User Name</label>
+                                                <input type="text" disabled={loginUser?.userRole !== "SuperAdmin"} className={"form-control " + (errors.nameErr ? "is-invalid" : "")} ref={nameRef} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                                                {errors.nameErr && <p style={{ color: "#ff7676" }}>{errors.nameErr}</p>}
                                             </div>
-                                            <div className="col-lg-6">
-                                                <div className="input-blocks">
-                                                    <label>Phone</label>
-                                                    <input type="text" readOnly className="form-control" value={formData.contact} onChange={(e) => setFormData({ ...formData, contact: e.target.value })} />
-                                                </div>
+                                        </div>
+                                        <div className="col-lg-6">
+                                            <div className="input-blocks">
+                                                <label>Phone</label>
+                                                <input type="text" disabled={loginUser?.userRole !== "SuperAdmin"} className="form-control" value={formData.contact} onChange={(e) => setFormData({ ...formData, contact: e.target.value })} />
                                             </div>
-                                            <div className="col-lg-6">
-                                                <div className="input-blocks">
-                                                    <label>Email</label>
-                                                    <input type="email" readOnly className="form-control" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-                                                </div>
+                                        </div>
+                                        <div className="col-lg-6">
+                                            <div className="input-blocks">
+                                                <label>Email</label>
+                                                <input type="email" ref={emailRef} disabled={loginUser?.userRole !== "SuperAdmin"} className={`form-control ${errors.emailErr ? "is-invalid" : ""}`} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                                                {errors.emailErr && <p style={{ color: "#ff7676" }}>{errors.emailErr}</p>}
                                             </div>
-                                            <div className="col-lg-6">
-                                                <div className="input-blocks">
-                                                    <label>Role</label>
-                                                    <Select
-                                                        classNamePrefix="react-select"
-                                                        options={role}
-                                                        placeholder={formData.userRole}
-                                                        onChange={(e) => handleSelectRole(e.value)}
-                                                        value={selectUserRole}
-                                                        isDisabled
+                                        </div>
+                                        <div className="col-lg-6">
+                                            <div className="input-blocks">
+                                                <label>Role</label>
+                                                <Select
+                                                    classNamePrefix="react-select"
+                                                    options={role}
+                                                    placeholder={formData.userRole}
+                                                    onChange={(e) => handleSelectRole(e)}
+                                                    value={selectUserRole}
+                                                    isDisabled={loginUser?.userRole !== "SuperAdmin"}
+                                                />
+                                                {errors.roleErr && <p style={{ color: "#ff7676" }}>{errors.roleErr}</p>}
+                                            </div>
+                                        </div>
+                                        <div className="col-lg-6">
+                                            <div className="input-blocks">
+                                                <label>Password</label>
+                                                <div className="pass-group">
+                                                    <input
+                                                        type={showPassword ? 'text' : 'password'}
+                                                        className={"form-control " + (errors.passwordErr ? "is-invalid" : "")}
+                                                        placeholder="Enter your password"
+                                                        value={formData.password}
+                                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                                        ref={passwordRef}
                                                     />
-                                                    {errors.roleErr && <p style={{ color: "#ff7676" }}>{errors.roleErr}</p>}
+                                                    <span
+                                                        className={`fas toggle-password ${showPassword ? 'fa-eye' : 'fa-eye-slash'}`}
+                                                        onClick={handleTogglePassword}
+                                                    />
                                                 </div>
-                                            </div>
-                                            <div className="col-lg-6">
-                                                <div className="input-blocks">
-                                                    <label>Password</label>
-                                                    <div className="pass-group">
-                                                        <input
-                                                            type={showPassword ? 'text' : 'password'}
-                                                            className={"pass-input " + (errors.nameErr ? "is-invalid" : "")}
-                                                            placeholder="Enter your password"
-                                                            value={formData.password}
-                                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                                        />
-                                                        <span
-                                                            className={`fas toggle-password ${showPassword ? 'fa-eye' : 'fa-eye-slash'}`}
-                                                            onClick={handleTogglePassword}
-                                                        />
-                                                    </div>
-                                                    {errors.passwordErr && <p style={{ color: "#ff7676" }}>{errors.passwordErr}</p>}
-                                                </div>
-                                            </div>
-                                            <div className="col-lg-6">
-                                                <div className="input-blocks">
-                                                    <label>Confirm Passworrd</label>
-                                                    <div className="pass-group">
-                                                        <input
-                                                            type={showConfirmPassword ? 'text' : 'password'}
-                                                            className={"pass-input " + (errors.nameErr ? "is-invalid" : "")}
-                                                            placeholder="Enter your password"
-                                                            value={formData.rePassword}
-                                                            onChange={(e) => setFormData({ ...formData, rePassword: e.target.value })}
-                                                        />
-                                                        <span
-                                                            className={`fas toggle-password ${showConfirmPassword ? 'fa-eye' : 'fa-eye-slash'}`}
-                                                            onClick={handleToggleConfirmPassword}
-                                                        />
-                                                    </div>
-                                                    {errors.rePasswordErr && <p style={{ color: "#ff7676" }}>{errors.rePasswordErr}</p>}
-                                                </div>
+                                                {errors.passwordErr && <p style={{ color: "#ff7676" }}>{errors.passwordErr}</p>}
                                             </div>
                                         </div>
-                                        <div className="modal-footer-btn">
-                                            <button
-                                                type="button"
-                                                className="btn btn-cancel me-2"
-                                                data-bs-dismiss="modal"
-                                                onClick={handleModalClose}
-                                            >
-                                                Cancel
-                                            </button>
-                                            <button to="#" className="btn btn-submit">
-                                                Save Changes
-                                            </button>
+                                        <div className="col-lg-6">
+                                            <div className="input-blocks">
+                                                <label>Confirm Password</label>
+                                                <div className="pass-group">
+                                                    <input
+                                                        type={showConfirmPassword ? 'text' : 'password'}
+                                                        className={"form-control " + (errors.rePasswordErr ? "is-invalid" : "")}
+                                                        placeholder="Enter your password"
+                                                        value={formData.rePassword}
+                                                        onChange={(e) => setFormData({ ...formData, rePassword: e.target.value })}
+                                                        ref={rePasswordRef}
+                                                    />
+                                                    <span
+                                                        className={`fas toggle-password ${showConfirmPassword ? 'fa-eye' : 'fa-eye-slash'}`}
+                                                        onClick={handleToggleConfirmPassword}
+                                                    />
+                                                </div>
+                                                {errors.rePasswordErr && <p style={{ color: "#ff7676" }}>{errors.rePasswordErr}</p>}
+                                            </div>
                                         </div>
-                                    </form>
+                                    </div>
+                                    <div className="modal-footer-btn">
+                                        <button
+                                            type="button"
+                                            className="btn btn-cancel me-2"
+                                            data-bs-dismiss="modal"
+                                            onClick={handleModalClose}
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button to="#" className="btn btn-submit" onClick={handleSubmit}>
+                                            Save Changes
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

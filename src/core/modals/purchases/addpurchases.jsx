@@ -1,18 +1,19 @@
 import { DatePicker } from "antd";
-import { Calendar, MinusCircle, PlusCircle } from "feather-icons-react/build/IconComponents";
-import React, { useEffect, useState } from "react";
+import { Calendar } from "feather-icons-react/build/IconComponents";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Select from "react-select";
 import TextEditor from "../../../feature-module/inventory/texteditor";
 import { useDispatch, useSelector } from "react-redux";
-import { addToCart, changeUnitCartRow, clearCart, decrementCart, getProduct, getPurchaseInv, getSupplier, incrementCart, insertPurchase, insertTransaction, removeCartRow, rowDiscCart, rowGstCart, rowPriceCart, updateInvID, updatePurchaseInv } from "../../redux/action";
+import { addToCart, changeUnitCartRow, clearCart, decrementCart, getProduct, getPurchaseInv, getSupplier, incrementCart, insertPurchase, insertTransaction, qty_KeyDownCart, qty_LeaveCart, removeCartRow, rowDiscCart, rowGstCart, rowPrice_Leave, rowPriceCart, updateInvID, updatePurchaseInv } from "../../redux/action";
 import ImageWithBasePath from "../../img/imagewithbasebath";
 import withReactContent from 'sweetalert2-react-content'
 import Swal from 'sweetalert2'
 import axios from "axios";
-// import { formatCurrency } from "../../../helper/helpers";
 import { all_routes } from "../../../Router/all_routes";
 import config from "../../redux/api/config"
+import { FaMinus, FaPlus } from "react-icons/fa";
+import "./style.css";
 
 
 const AddPurchases = (p) => {
@@ -53,6 +54,9 @@ const AddPurchases = (p) => {
   const [invoiceMode, setInvoiceMode] = useState(false);
 
   const [loginUser, setLoginUser] = useState(null);
+
+  const dynamicTableBG = useRef();
+  const barcodeRef = useRef();
 
   useEffect(() => {
     if (p.insertMode) {
@@ -123,8 +127,22 @@ const AddPurchases = (p) => {
     setSelectProduct(productArray.find((x) => x.value === e));
     if (e > 0) {
       dispatch(addToCart(productStore.filter((i) => i.clientId === loginUser?.clientId && i.branchId === loginUser?.branchId && i.productId === e)));
+      const currentHeight = dynamicTableBG.current.offsetHeight;
+      dynamicTableBG.current.style.height = currentHeight + 70 + "px";
     }
   };
+  const handleChangeBarcode = (e) => {
+    if (e != "") {
+      const x = productStore.filter((i) => i.clientId === loginUser?.clientId && i.branchId === loginUser?.branchId && i.qrcodeBarcode === e);
+      if (x.length > 0) {
+        dispatch(addToCart(x));
+        const currentHeight = dynamicTableBG.current.offsetHeight;
+        dynamicTableBG.current.style.height = currentHeight + 70 + "px";
+        barcodeRef.current.value = "";
+      }
+    }
+  };
+
   const url = config.url;
   const handleFormSubmit = async () => {
     const mainUrl = url + "PurchaseInv";
@@ -171,19 +189,19 @@ const AddPurchases = (p) => {
     else {
       productReqAlert();
     }
-  }
+  };
   const calculate = () => {
     const _total = cartStore.reduce((sum, i) => sum + i.total, 0);
     const _gst = cartStore.reduce((sum, i) => sum + i.gst, 0);
     const _disc = cartStore.reduce((sum, i) => sum + i.disc, 0);
     const _netTotal = cartStore.reduce((sum, i) => sum + i.netTotal, 0);
     setCart({ ...cart, total: _total, gst: _gst, disc: _disc, netTotal: _netTotal });
-  }
-  const handleRowDecrement = (id, num) => {
+  };
+  const handleRowDecrement = (num, index) => {
     if (num > 1) {
-      dispatch(decrementCart(id))
+      dispatch(decrementCart(index))
     }
-  }
+  };
   const handleMode = (e) => {
     setSelectMode(mode.find((x) => x.value === e));
     if (e === "Credit") {
@@ -194,7 +212,7 @@ const AddPurchases = (p) => {
       setSelectStatus(status.find((x) => x.value === "Received"));
       setCart({ ...cart, paymentStatus: "Received", paymentMode: "Cash" });
     }
-  }
+  };
   const handleStatus = (e) => {
     if (e === "Pending") {
       setSelectMode(mode.find((x) => x.value === "Credit"));
@@ -206,14 +224,14 @@ const AddPurchases = (p) => {
       setSelectStatus(status.find((x) => x.value === e));
       setCart({ ...cart, paymentStatus: "Received", paymentMode: "Cash" });
     }
-  }
+  };
   //Supplier
   const handleSelectSupplier = (e) => {
     setSelectSupplier(supplierArray.find((x) => x.value === e));
     setCart({ ...cart, supplierID: e });
-  }
+  };
   const MySwal = withReactContent(Swal);
-  const showConfirmationAlert = (e) => {
+  const showConfirmationAlert = (i) => {
     MySwal.fire({
       title: 'Are you sure ?',
       text: 'You won\'t to remove this product into cart!',
@@ -224,7 +242,9 @@ const AddPurchases = (p) => {
       cancelButtonText: 'Cancel',
     }).then((result) => {
       if (result.isConfirmed) {
-        dispatch(removeCartRow(e));
+        const currentHeight = dynamicTableBG.current.offsetHeight;
+        dynamicTableBG.current.style.height = `${currentHeight - 70}px`;
+        dispatch(removeCartRow(i));
         MySwal.close();
       }
     });
@@ -246,7 +266,7 @@ const AddPurchases = (p) => {
         confirmButton: 'btn btn-danger',
       },
     });
-  }
+  };
   const productReqAlert = () => {
     MySwal.fire({
       icon: "error",
@@ -257,7 +277,7 @@ const AddPurchases = (p) => {
         confirmButton: 'btn btn-danger',
       },
     });
-  }
+  };
   const modeReqAlert = () => {
     MySwal.fire({
       icon: "error",
@@ -268,14 +288,14 @@ const AddPurchases = (p) => {
         confirmButton: 'btn btn-danger',
       },
     });
-  }
+  };
   const handleClose = () => {
     p.setInsertMode(false);
-  }
+  };
 
-  const handleRowUOM = (e, id) => {
-    dispatch(changeUnitCartRow(id, e.value));
-  }
+  const handleRowUOM = (e, index) => {
+    dispatch(changeUnitCartRow(e.value, index));
+  };
 
   const uomOptions = (min, max) => {
     if (min === max)
@@ -287,7 +307,7 @@ const AddPurchases = (p) => {
         { value: min, label: min },
         ...(max ? [{ value: max, label: max }] : [])
       ]
-  }
+  };
 
   const navigate = useNavigate();
   const val = localStorage.getItem("userID");
@@ -305,8 +325,8 @@ const AddPurchases = (p) => {
   return (
     <div>
       {/* Add Purchase */}
-      <div className="modal fade" id="add-units" onClick={handleClose}>
-        <div className="modal-dialog purchase modal-dialog-centered stock-adjust-modal">
+      <div className="modal fade" id="add-purchase" onClick={handleClose}>
+        <div className="modal-dialog modal-fullscreen" style={{ width: "100vw" }}>
           <div className="modal-content">
             <div className="page-wrapper-new p-0">
               <div className="content">
@@ -378,7 +398,7 @@ const AddPurchases = (p) => {
                     </div>
                   </div>
                   <div className="row">
-                    <div className="col-lg-12">
+                    <div className="col-lg-8">
                       <label>Product Name</label>
                       <div className="input-block">
                         <Select
@@ -388,113 +408,130 @@ const AddPurchases = (p) => {
                           onChange={(e) => handleChange(e.value)}
                           value={selectProduct}
                         />
-                        <br />
                       </div>
                     </div>
-                    {/* Cart Table */}
-                    <div className="col-lg-12">
-                      <div className="modal-body-table">
-                        <div className="table-responsive">
-                          <table className="table">
-                            <thead>
-                              <tr>
-                                <th>Product</th>
-                                <th>Qty</th>
-                                <th>   Unit   </th>
-                                <th>Purchase Rate($)</th>
-                                <th>Gross Amount</th>
-                                <th>Discount(%)</th>
-                                <th>Discount Amount($)</th>
-                                <th>Tax(%)</th>
-                                <th>Tax Amount($)</th>
-                                <th>Net Amount($)</th>
-                                <th>Item Cost($)</th>
-                                <th>Action</th>
+                    <div className="col-lg-4">
+                      <label>Barcode</label>
+                      <input type="text" className="form-control" ref={barcodeRef} onChange={(e) => handleChangeBarcode(e.target.value)} placeholder="search by product barcode..." />
+                    </div>
+                  </div>
+                  <br />
+                  <div className="col-lg-12">
+                    <div className="modal-body-table">
+                      <div className="table-responsive" ref={dynamicTableBG} style={{ height: "120px", transition: "0.3s" }}>
+                        <table className="table">
+                          <thead>
+                            <tr>
+                              <th>Product</th>
+                              <th>Qty</th>
+                              <th>Unit</th>
+                              <th>Purchase Rate</th>
+                              <th>Gross Amount</th>
+                              <th>Discount(%)</th>
+                              <th>Discount Amount</th>
+                              <th>Tax(%)</th>
+                              <th>Tax Amount</th>
+                              <th>Net Amount</th>
+                              <th>Item Cost</th>
+                              <th>Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {cartStore?.map((r, index) => (
+                              <tr key={index}>
+                                <td className="p-2">{r.name}</td>
+                                <td className="d-flex text-center">
+                                  <button className="btn text-white me-1 qty-btn" onClick={() => handleRowDecrement(r?.qty, index)}>
+                                    <FaMinus className="qty-i" />
+                                  </button>
+                                  <input
+                                    type="number"
+                                    className="form-control text-center"
+                                    name="qty"
+                                    value={r?.qty}
+                                    onFocus={(e) => e.target.select()}
+                                    onChange={(e) => dispatch(qty_KeyDownCart(e.target.value, index))}
+                                    onBlur={(e) => dispatch(qty_LeaveCart(e.target.value, index))}
+                                  />
+                                  <button className="btn text-white ms-1 qty-btn" onClick={() => dispatch(incrementCart(index))}>
+                                    <FaPlus className="qty-i" />
+                                  </button>
+                                </td>
+                                <td className="p-2">
+                                  <Select
+                                    options={uomOptions(r.minUom, r.maxUom)}
+                                    classNamePrefix="react-select"
+                                    placeholder="Choose Option"
+                                    onChange={(e) => handleRowUOM(e, index)}
+                                    value={r.uom ? { value: r.uom, label: r.uom } : null}
+                                  />
+                                </td>
+                                <td className="p-2"><input type="number" className="form-control" value={r.price}
+                                  onChange={(e) => dispatch(rowPriceCart(e.target.value, index))}
+                                  onBlur={(e) => dispatch(rowPrice_Leave(e.target.value, index))}
+                                /></td>
+                                <td className="p-2">{r.total.toFixed(2)}</td>
+                                <td className="p-2"><input type="number" className="form-control" value={r.discPerc} onChange={(e) => dispatch(rowDiscCart(e.target.value, index))} /></td>
+                                <td className="p-2">{r.disc.toFixed(2)}</td>
+                                <td className="p-2"><input type="number" className="form-control" value={r.gstPerc} onChange={(e) => dispatch(rowGstCart(e.target.value, index))} /></td>
+                                <td className="p-2">{r.gst.toFixed(2)}</td>
+                                <td className="p-2">{r.netTotal.toFixed(2)}</td>
+                                <td className="p-2">{r.costPrice.toFixed(2)}</td>
+                                <td>
+                                  <Link className="delete-set" onClick={() => showConfirmationAlert(index)}><ImageWithBasePath src="assets/img/icons/delete.svg" alt="svg" /></Link>
+                                </td>
                               </tr>
-                            </thead>
-                            <tbody>
-                              {cartStore.map((r, index) => (
-                                <tr key={index}>
-                                  <td className="p-2">{r.name}</td>
-                                  <td>
-                                    <div className="product-quantity">
-                                      <span className="quantity-btn" onClick={() => handleRowDecrement(r.id, r.qty)}>+ <MinusCircle /></span>
-                                      <input type="number" name="qtyText" className="quntity-input" value={r.qty} />
-                                      <span className="quantity-btn" onClick={() => dispatch(incrementCart(r.id))}> <PlusCircle /></span>
-                                    </div>
-                                  </td>
-                                  <td className="p-2">
-                                    <Select
-                                      options={uomOptions(r.minUom, r.maxUom)}
-                                      classNamePrefix="react-select"
-                                      placeholder="Choose Option"
-                                      onChange={(e) => handleRowUOM(e, r.id)}
-                                      value={r.uom ? { value: r.uom, label: r.uom } : null}
-                                    />
-                                  </td>
-                                  <td className="p-2"><input type="number" className="form-control" value={r.price} onChange={(e) => dispatch(rowPriceCart(r.id, e.target.value))} /></td>
-                                  <td className="p-2">{r.total}</td>
-                                  <td className="p-2"><input type="number" className="form-control" value={r.discPerc} onChange={(e) => dispatch(rowDiscCart(r.id, e.target.value))} /></td>
-                                  <td className="p-2">{r.disc}</td>
-                                  <td className="p-2"><input type="number" className="form-control" value={r.gstPerc} onChange={(e) => dispatch(rowGstCart(r.id, e.target.value))} /></td>
-                                  <td className="p-2">{r.gst}</td>
-                                  <td className="p-2">{r.netTotal}</td>
-                                  <td className="p-2">{r.costPrice}</td>
-                                  <td>
-                                    <Link className="delete-set" onClick={() => showConfirmationAlert(r.id)}><ImageWithBasePath src="assets/img/icons/delete.svg" alt="svg" /></Link>
-                                  </td>
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="row">
-                      <div className="col-lg-2 col-md-6 col-sm-12">
-                        <div className="input-blocks">
-                          <label>Total Items#</label>
-                          <input type="text" value={cartStore.length} />
-                        </div>
-                      </div>
-                      <div className="col-lg-2 col-md-6 col-sm-12">
-                        <div className="input-blocks">
-                          <label>Total Gross</label>
-                          <input type="number" className="form-control" value={cart.total} />
-                        </div>
-                      </div>
-                      <div className="col-lg-2 col-md-6 col-sm-12">
-                        <div className="input-blocks">
-                          <label>Total Discount</label>
-                          <input type="number" className="form-control" value={cart.disc} />
-                        </div>
-                      </div>
-                      <div className="col-lg-2 col-md-6 col-sm-12">
-                        <div className="input-blocks">
-                          <label>Total Tax</label>
-                          <input type="number" className="form-control" value={cart.gst} />
-                        </div>
-                      </div>
-                      <div className="col-lg-2 col-md-6 col-sm-12">
-                        <div className="input-blocks">
-                          <label>Total Net</label>
-                          <input type="number" className="form-control" value={cart.netTotal} />
-                        </div>
-                      </div>
-                      <div className="col-lg-2 col-md-6 col-sm-12">
-                        <div className="input-blocks">
-                          <label>Payment Status</label>
-                          <Select
-                            options={status}
-                            classNamePrefix="react-select"
-                            placeholder="Choose"
-                            onChange={(e) => handleStatus(e.value)}
-                            value={selectStatus}
-                          />
-                        </div>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   </div>
+                  <div className="row">
+                    <div className="col-lg-2 col-md-6 col-sm-12">
+                      <div className="input-blocks">
+                        <label>Total Items#</label>
+                        <input type="text" value={cartStore.length} />
+                      </div>
+                    </div>
+                    <div className="col-lg-2 col-md-6 col-sm-12">
+                      <div className="input-blocks">
+                        <label>Total Gross</label>
+                        <input type="number" className="form-control" value={cart.total.toFixed(2)} />
+                      </div>
+                    </div>
+                    <div className="col-lg-2 col-md-6 col-sm-12">
+                      <div className="input-blocks">
+                        <label>Total Discount</label>
+                        <input type="number" className="form-control" value={cart.disc.toFixed(2)} />
+                      </div>
+                    </div>
+                    <div className="col-lg-2 col-md-6 col-sm-12">
+                      <div className="input-blocks">
+                        <label>Total Tax</label>
+                        <input type="number" className="form-control" value={cart.gst.toFixed(2)} />
+                      </div>
+                    </div>
+                    <div className="col-lg-2 col-md-6 col-sm-12">
+                      <div className="input-blocks">
+                        <label>Total Net</label>
+                        <input type="number" className="form-control" value={cart.netTotal.toFixed(2)} />
+                      </div>
+                    </div>
+                    <div className="col-lg-2 col-md-6 col-sm-12">
+                      <div className="input-blocks">
+                        <label>Payment Status</label>
+                        <Select
+                          options={status}
+                          classNamePrefix="react-select"
+                          placeholder="Choose"
+                          onChange={(e) => handleStatus(e.value)}
+                          value={selectStatus}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="col-lg-12">
                     <div className="input-blocks summer-description-box">
                       <label>Notes</label>

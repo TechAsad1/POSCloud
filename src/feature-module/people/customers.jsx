@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Filter, Sliders } from "react-feather";
 import ImageWithBasePath from "../../core/img/imagewithbasebath";
 import Select from "react-select";
@@ -9,14 +9,13 @@ import Table from "../../core/pagination/datatable";
 import CustomerModal from "../../core/modals/peoples/customerModal";
 import Swal from "sweetalert2";
 import withReactContent from "sweetalert2-react-content";
-import { deleteCustomer, getCustomer, getUsers, setToogleHeader } from "../../core/redux/action";
+import { deleteCustomer, getCustomer, setToogleHeader } from "../../core/redux/action";
 import { ChevronUp, PlusCircle, RotateCcw } from "feather-icons-react/build/IconComponents";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
-import { all_routes } from "../../Router/all_routes";
+import { useLoginData } from "../../helper/loginUserData";
 
 const Customers = () => {
 
-  const route = all_routes;
   const data = useSelector((state) => state.toggle_header);
   const renderTooltip = (props) => (
     <Tooltip id="pdf-tooltip" {...props}>
@@ -134,7 +133,6 @@ const Customers = () => {
 
   const dispatch = useDispatch();
   const posts1 = useSelector((state) => state.customers);
-  const users = useSelector((state) => state.users);
   const [invID, setInvID] = useState(0);
   const [page, setPage] = useState("add");
   const [editMode, setEditMode] = useState(false);
@@ -146,7 +144,7 @@ const Customers = () => {
   const [selectCountry, setSelectCountry] = useState(countryList[0]);
 
   const [posts, setPosts] = useState([]);
-  const [loginUser, setLoginUser] = useState(null);
+  const loginUser = useLoginData();
 
   useEffect(() => {
     if (loginUser) {
@@ -160,11 +158,9 @@ const Customers = () => {
       setPosts([]);
   }, [loginUser, posts1]);
 
-
   //Custom Code
   useEffect(() => {
     dispatch(getCustomer());
-    dispatch(getUsers());
   }, [dispatch]);
   useEffect(() => {
     setCustomerList((prev) => [
@@ -236,19 +232,6 @@ const Customers = () => {
     setPage("add");
     setEditMode(true);
   }
-
-  const navigate = useNavigate();
-  const val = localStorage.getItem("userID");
-  useEffect(() => {
-    if (!isNaN(val) && Number.isInteger(Number(val)) && Number(val) > 0) {
-      const id = Number(val);
-      setLoginUser(users.find((i) => i.userId === id));
-    }
-    else
-      navigate(route.signin);
-  }, [users, navigate]);
-  if (!loginUser)
-    return null;
 
   return (
     <div className="page-wrapper">

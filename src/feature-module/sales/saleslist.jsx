@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import ImageWithBasePath from "../../core/img/imagewithbasebath";
 import {
   Calendar,
@@ -11,7 +11,7 @@ import {
   StopCircle,
   User,
 } from "feather-icons-react/build/IconComponents";
-import { deleteSaleInv, getBranchById, getClientById, getCustomer, getProduct, getSaleByID, getSaleInv, getTransactionByRID, getUsers, setToogleHeader } from "../../core/redux/action";
+import { addToSaleCart, addToSaleCartWithoutPics, changeUnitCartRow, clearCart, decrementCart, deleteSaleInv, getBranchById, getClientById, getCustomer, getProduct, getSaleByID, getSaleInv, getTransactionByRID, incrementCart, insertSale, qty_KeyDownCart, qty_LeaveCart, removeCartRow, rowDiscCart, rowGstCart, rowPrice_Leave, rowPriceCart, setToogleHeader } from "../../core/redux/action";
 import { useDispatch, useSelector } from "react-redux";
 import { Filter, MinusCircle } from "react-feather";
 import Select from "react-select";
@@ -20,11 +20,13 @@ import Table from "../../core/pagination/datatable";
 import withReactContent from "sweetalert2-react-content";
 import Swal from "sweetalert2";
 import { dateFormat, formatCurrency, getImageFromUrl } from "../../helper/helpers";
-import { all_routes } from "../../Router/all_routes";
+import { FaMinus, FaPlus } from "react-icons/fa";
+import config from "../../core/redux/api/config"
+import axios from "axios";
+import { useLoginData } from "../../helper/loginUserData";
 
 const SalesList = () => {
 
-  const route = all_routes;
   const data = useSelector((state) => state.toggle_header);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
   const toggleFilterVisibility = () => {
@@ -40,18 +42,18 @@ const SalesList = () => {
     { value: "Completed", label: "Completed" },
     { value: "InProgress", label: "InProgress" },
   ];
-  const paymentMode = [
+  const paymentModes = [
     { value: "Choose Payment Mode", label: "Choose Payment Mode" },
     { value: "Cash", label: "Cash" },
     { value: "Cheque", label: "Cheque" },
     { value: "Credit", label: "Credit" },
   ];
   const paymentStatus = [
-    { value: "Choose Payment Status", label: "Choose Payment Status" },
+    { value: "Choose", label: "Choose" },
     { value: "Received", label: "Received" },
-    { value: "Ordered", label: "Ordered" },
     { value: "Pending", label: "Pending" },
   ];
+
   const [selectedDate, setSelectedDate] = useState(new Date());
   const handleDateChange = (date) => {
     setSelectedDate(date);
@@ -124,7 +126,7 @@ const SalesList = () => {
     {
       title: "Customer",
       dataIndex: "customerId",
-      render: (x) => <span>{customer.find((i) => i.customerId == x)?.customerName}</span>,
+      render: (x) => <span>{customerStore.find((i) => i.customerId == x)?.customerName}</span>,
       sorter: (a, b) => a.customerId.length - b.customerId.length,
     },
     {
@@ -191,23 +193,38 @@ const SalesList = () => {
   const stock = useSelector((state) => state.posts);
   const rows = useSelector((state) => state.rows);
   const posts1 = useSelector((state) => state.saleInv);
-  const customer = useSelector((state) => state.customers);
   const singleBranch = useSelector((state) => state.branches);
   const trInv = useSelector((state) => state.trInv);
-  const users = useSelector((state) => state.users);
   const singleClient = useSelector((state) => state.clients);
   const [showView, setShowView] = useState(false);
-  const [customerList, setCustomerList] = useState([{ value: 0, label: 'Choose Customer' }]);
   const [invID, setInvID] = useState(0);
   const [dataSource, setDataSource] = useState([]);
+  const loginUser = useLoginData();
 
+
+  const cartStore = useSelector((state) => state.cart);
+  const [cart, setCart] = useState({ customerID: 1, paymentStatus: "Received", total: 0, gst: 0, gstPerc: 0, disc: 0, discPerc: 0, netTotal: 0, paymentMode: "Cash" });
+  //Product
+  const productStore = useSelector((state) => state.posts);
+  const [productArray, setProductArray] = useState([{ value: 0, label: 'Choose product name' }]);
+  const [selectProduct, setSelectProduct] = useState(productArray[0]);
+  //Customer
+  const customerStore = useSelector((state) => state.customers);
+  const [customerList, setCustomerList] = useState([]);
   const [selectCustomer, setSelectCustomer] = useState(customerList[0]);
-  const [selectPaymentMode, setSelectPaymentMode] = useState(paymentMode[0]);
+
+  //PaymentMode
+  const [selectPaymentMode, setSelectPaymentMode] = useState(paymentModes[0]);
   const [selectPaymentStatus, setSelectPaymentStatus] = useState(paymentStatus[0]);
-  // const [insertMode, setInsertMode] = useState(false);
+  //Invoice PaymentMode
+  const [selectMode, setSelectMode] = useState(paymentModes[1]);
+  //Invoice PaymentStatus
+  const [selectStatus, setSelectStatus] = useState(paymentStatus[1]);
 
   const [posts, setPosts] = useState([]);
-  const [loginUser, setLoginUser] = useState(null);
+
+  const dynamicTableBG = useRef();
+  const barcodeRef = useRef();
 
   useEffect(() => {
     if (loginUser) {
@@ -222,36 +239,237 @@ const SalesList = () => {
     }
   }, [loginUser, posts1]);
 
-
   useEffect(() => {
+    dispatch(clearCart());
     dispatch(getSaleInv());
     dispatch(getCustomer());
     dispatch(getProduct());
-    dispatch(getUsers());
   }, [dispatch]);
   useEffect(() => {
     searchEngine("", "");
   }, [posts]);
   useEffect(() => {
-    setCustomerList((prev) => [
-      prev[0],
-      ...(customer?.filter((i) => i.customerId === 1).map((x) => ({
+    setCustomerList([]);
+    const filteredCustomers = customerStore
+      ?.filter(
+        (i) =>
+          i.clientId === loginUser?.clientId &&
+          i.branchId === loginUser?.branchId
+      )
+      .map((x) => ({
         value: x.customerId,
-        label: x.customerName
-      })) || [])
+        label: x.customerName,
+      }));
+    setCustomerList([
+      ...(filteredCustomers || []),
     ]);
-    setCustomerList((prev) => [
-      prev[0],
-      prev[1],
-      ...(customer?.filter((i) => i.clientId === loginUser?.clientId && i.branchId === loginUser?.branchId).map((x) => ({
-        value: x.customerId,
-        label: x.customerName
-      })) || [])
-    ]);
-  }, [customer]);
+    setSelectCustomer(customerList[0]);
+  }, [customerStore, loginUser]);
   useEffect(() => {
     setShowView(true);
   }, [rows]);
+  useEffect(() => {
+    setProductArray((prev) => [
+      prev[0],
+      ...productStore.filter((i) => i.clientId === loginUser?.clientId && i.branchId === loginUser?.branchId).map((x) => ({
+        value: x.productId,
+        label: x.productName
+      }))
+    ]);
+  }, [productStore, loginUser]);
+  useEffect(() => {
+    calculation();
+  }, [cart.gstPerc, cart.discPerc]);
+  useEffect(() => {
+    calculation();
+  }, [cartStore]);
+
+  //AddToCart
+  const handleChange = (e) => {
+    setSelectProduct(productArray.find((x) => x.value === e));
+    if (e > 0) {
+      dispatch(addToSaleCartWithoutPics(productStore.filter((i) => i.clientId === loginUser?.clientId && i.branchId === loginUser?.branchId && i.productId === e)));
+      const currentHeight = dynamicTableBG.current.offsetHeight;
+      dynamicTableBG.current.style.height = currentHeight + 70 + "px";
+      calculation();
+    }
+  };
+  const handleChangeBarcode = (e) => {
+    if (e != "") {
+      const x = productStore.filter((i) => i.clientId === loginUser?.clientId && i.branchId === loginUser?.branchId && i.qrcodeBarcode === e);
+      if (x.length > 0) {
+        dispatch(addToSaleCart(x));
+        const currentHeight = dynamicTableBG.current.offsetHeight;
+        dynamicTableBG.current.style.height = currentHeight + 70 + "px";
+        barcodeRef.current.value = "";
+      }
+    }
+  };
+  const handleSelectCustomer = (e) => {
+    setSelectCustomer(customerList.find((x) => x.value === e));
+    setCart({ ...cart, customerID: e });
+  };
+  const handleMode = (e) => {
+    setSelectMode(paymentModes.find((x) => x.value === e));
+    if (e === "Credit") {
+      setSelectStatus(paymentStatus.find((x) => x.value === "Pending"));
+      setCart({ ...cart, paymentStatus: "Pending", paymentMode: "Credit" });
+    }
+    else {
+      setSelectStatus(paymentStatus.find((x) => x.value === "Received"));
+      setCart({ ...cart, paymentStatus: "Received", paymentMode: "Cash" });
+    }
+  };
+  const handleStatus = (e) => {
+    if (e === "Pending") {
+      setSelectMode(paymentModes.find((x) => x.value === "Credit"));
+      setSelectStatus(paymentStatus.find((x) => x.value === "Pending"));
+      setCart({ ...cart, paymentStatus: "Pending", paymentMode: "Credit" });
+    }
+    else {
+      setSelectMode(paymentModes.find((x) => x.value === "Cash"));
+      setSelectStatus(paymentStatus.find((x) => x.value === e));
+      setCart({ ...cart, paymentStatus: "Received", paymentMode: "Cash" });
+    }
+  };
+  const handleRowDecrement = (num, index) => {
+    if (num > 1) {
+      dispatch(decrementCart(index))
+    }
+  };
+  const handleRowUOM = (e, index) => {
+    dispatch(changeUnitCartRow(e.value, index));
+  };
+  const uomOptions = (min, max) => {
+    if (min === max)
+      return [
+        { value: min, label: min },
+      ]
+    else
+      return [
+        { value: min, label: min },
+        ...(max ? [{ value: max, label: max }] : [])
+      ]
+  };
+  const calculation = () => {
+    let _total = cartStore.reduce((sum, i) => { return sum + i.netTotal }, 0);
+    let dis = (cart.discPerc * _total) / 100;
+    let _gst = (cart.gstPerc * _total) / 100;
+    let _netTotal = (_total + _gst) - dis;
+    setCart({ ...cart, total: _total, netTotal: _netTotal, disc: dis, gst: _gst });
+  }
+
+  const url = config.url;
+  const handleFormSubmit = async () => {
+    const mainUrl = url + "SaleInv";
+    if (cartStore.length > 0) {
+      if (cart.paymentStatus === "Choose")
+        modeReqAlert();
+      else {
+        const insertTemp = {
+          clientId: loginUser?.clientId,
+          branchId: loginUser?.branchId,
+          createdBy: loginUser?.userId,
+          customerId: cart.customerID,
+          paymentMode: cart.paymentMode,
+          total: cart.total,
+          netTotal: cart.netTotal,
+          item: cartStore.length,
+          gstPerc: cart.gstPerc,
+          gst: cart.gst,
+          discount: cart.disc,
+          discPerc: cart.discPerc,
+          isHold: false,
+        };
+        let rid = 0;
+        try {
+          await axios.post(mainUrl, insertTemp).then((e) => {
+            rid = e.data.receiptNo;
+            dispatch(getSaleInv());
+          });
+        } catch (error) {
+          console.log(error.message);
+        }
+        if (rid > 0) {
+          const array = cartStore.map((x) => ({
+            clientId: loginUser?.clientId,
+            branchId: loginUser?.branchId,
+            receiptNo: rid,
+            productId: x.id,
+            quantity: x.qty,
+            uom: x.minUom || "PCS",
+            factor: x.factor,
+            salePrice: x.price,
+            gstprct: x.gstPerc,
+            gstamount: x.gst,
+            discountPrct: x.discPerc,
+            discountAmount: x.disc,
+            productTotal: x.netTotal,
+            productCost: 0,
+          }));
+          dispatch(insertSale(array));
+          successAlert();
+        }
+      }
+    }
+    else
+      productReqAlert();
+  };
+  const successAlert = () => {
+    MySwal.fire({
+      icon: "success",
+      title: "Record inserted successfully",
+      confirmButtonText: "Ok",
+    })
+    dispatch(clearCart());
+    calculation();
+    setSelectProduct(productArray[0]);
+    setSelectCustomer(customerList[0]);
+    setCart({ ...cart, customerID: 1, paymentStatus: "Received", total: 0, gst: 0, gstPerc: 0, disc: 0, discPerc: 0, netTotal: 0, paymentMode: "Cash" });
+    setSelectMode(paymentModes[1]);
+    setSelectStatus(paymentStatus[1]);
+  };
+  const productReqAlert = () => {
+    MySwal.fire({
+      icon: "error",
+      title: 'Empty Cart!',
+      text: "You have not added any products to the cart!",
+      confirmButtonText: 'OK',
+      customClass: {
+        confirmButton: 'btn btn-danger',
+      },
+    });
+  };
+  const modeReqAlert = () => {
+    MySwal.fire({
+      icon: "error",
+      title: 'Payment Mode Required!',
+      text: "You have selected the wrong payment mode!",
+      confirmButtonText: 'OK',
+      customClass: {
+        confirmButton: 'btn btn-danger',
+      },
+    });
+  };
+  const removeCartRowAlert = (i) => {
+    MySwal.fire({
+      title: 'Are you sure ?',
+      text: 'You won\'t to remove this product into cart!',
+      showCancelButton: true,
+      confirmButtonColor: '#00ff00',
+      confirmButtonText: 'Yes, delete it!',
+      cancelButtonColor: '#ff0000',
+      cancelButtonText: 'Cancel',
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const currentHeight = dynamicTableBG.current.offsetHeight;
+        dynamicTableBG.current.style.height = `${currentHeight - 70}px`;
+        dispatch(removeCartRow(i));
+        MySwal.close();
+      }
+    });
+  };
+
   //Search Engine
   const searchEngine = (action, key) => {
     if (action === "newest") {
@@ -321,16 +539,34 @@ const SalesList = () => {
     dispatch(getTransactionByRID(id, "Sale"));
   }
 
-  const navigate = useNavigate();
-  const val = localStorage.getItem("userID");
-  useEffect(() => {
-    if (!isNaN(val) && Number.isInteger(Number(val)) && Number(val) > 0) {
-      const id = Number(val);
-      setLoginUser(users.find((i) => i.userId === id));
-    }
-    else
-      navigate(route.signin);
-  }, [users, navigate]);
+  const gst = [
+    { value: '0', label: 'GST 0%' },
+    { value: '5', label: 'GST 5%' },
+    { value: '10', label: 'GST 10%' },
+    { value: '15', label: 'GST 15%' },
+    { value: '20', label: 'GST 20%' },
+    { value: '25', label: 'GST 25%' },
+    { value: '30', label: 'GST 30%' },
+  ];
+  const discount = [
+    { value: '0', label: '0%' },
+    { value: '5', label: '5%' },
+    { value: '10', label: '10%' },
+    { value: '15', label: '15%' },
+    { value: '20', label: '20%' },
+    { value: '25', label: '25%' },
+    { value: '30', label: '30%' },
+  ];
+  const [selectGst, setSelectGst] = useState(gst[0]);
+  const [selectDiscount, setSelectDiscount] = useState(discount[0]);
+  const handleChangeGst = (e) => {
+    setSelectGst(gst.find((i) => i.value === e));
+    setCart({ ...cart, gstPerc: e })
+  }
+  const handleChangeDiscount = (e) => {
+    setSelectDiscount(discount.find((i) => i.value === e));
+    setCart({ ...cart, discPerc: e })
+  }
 
   return (
     <div>
@@ -483,10 +719,10 @@ const SalesList = () => {
                         <StopCircle className="info-img" />
                         <Select
                           className="img-select"
-                          options={paymentMode}
+                          options={paymentModes}
                           classNamePrefix="react-select"
                           placeholder="Choose Payment Mode"
-                          onChange={(e) => setSelectPaymentMode(paymentMode.find((x) => x.value === e.value))}
+                          onChange={(e) => setSelectPaymentMode(paymentModes.find((x) => x.value === e.value))}
                           value={selectPaymentMode}
                         />
                       </div>
@@ -542,7 +778,7 @@ const SalesList = () => {
       <>
         {/*add popup */}
         <div className="modal fade" id="add-sales-new">
-          <div className="modal-dialog add-centered">
+          <div className="modal-dialog modal-fullscreen" style={{ width: "100vw" }}>
             <div className="modal-content">
               <div className="page-wrapper p-0 m-0">
                 <div className="content p-0">
@@ -561,186 +797,212 @@ const SalesList = () => {
                   </div>
                   <div className="card">
                     <div className="card-body">
-                      <form>
-                        <div className="row">
-                          <div className="col-lg-4 col-sm-6 col-12">
-                            <div className="input-blocks">
-                              <label>Customer Name</label>
-                              <div className="row">
-                                <div className="col-lg-10 col-sm-10 col-10">
+                      <div className="row">
+                        {/* Customner */}
+                        <div className="col-lg-4 col-sm-6 col-12">
+                          <div className="input-blocks">
+                            <label>Customer Name</label>
+                            <Select
+                              classNamePrefix="react-select"
+                              options={customerList}
+                              onChange={(e) => handleSelectCustomer(e.value)}
+                              placeholder="Choose Option"
+                              value={selectCustomer}
+                            />
+                          </div>
+                        </div>
+                        <div className="col-lg-4 col-sm-6 col-12">
+                          <div className="input-blocks">
+                            <label>Date</label>
+                            <div className="input-groupicon calender-input">
+                              <Calendar className="info-img" />
+                              <DatePicker
+                                selected={selectedDate}
+                                onChange={handleDateChange}
+                                type="date"
+                                className="filterdatepicker"
+                                dateFormat="dd-MM-yyyy"
+                                placeholder="Choose Date"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="col-lg-4 col-sm-6 col-6">
+                          <div className="input-blocks">
+                            <label>Payment Mode</label>
+                            <Select
+                              classNamePrefix="react-select"
+                              value={selectMode}
+                              options={paymentModes}
+                              placeholder="Choose Option"
+                              onChange={(e) => handleMode(e.value)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="row">
+                        <div className="col-lg-8 col-sm-6 col-12">
+                          <label>Product Name</label>
+                          <Select
+                            className="react-select"
+                            options={productArray}
+                            value={selectProduct}
+                            onChange={(e) => handleChange(e.value)}
+                          />
+                        </div>
+                        <div className="col-lg-4 col-sm-6 col-12">
+                          <label>Product Barcode</label>
+                          <input type="text" className="form-control" ref={barcodeRef} onChange={(e) => handleChangeBarcode(e.target.value)} />
+                        </div>
+                      </div>
+                      <div className="table-responsive" ref={dynamicTableBG} style={{ height: "120px", transition: "0.3s" }}>
+                        <table className="table">
+                          <thead>
+                            <tr>
+                              <th>Product</th>
+                              <th>Qty</th>
+                              <th>Unit</th>
+                              <th>Consumer Price</th>
+                              <th>Gross Amount</th>
+                              <th>Discount(%)</th>
+                              <th>Discount Amount</th>
+                              <th>Tax(%)</th>
+                              <th>Tax Amount</th>
+                              <th>Net Amount</th>
+                              <th>Item Price</th>
+                              <th>Action</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {cartStore?.map((r, index) => (
+                              <tr key={index}>
+                                <td className="p-2">{r.name}</td>
+                                <td className="d-flex text-center">
+                                  <button className="btn text-white me-1 qty-btn" onClick={() => handleRowDecrement(r?.qty, index)}>
+                                    <FaMinus className="qty-i" />
+                                  </button>
+                                  <input
+                                    type="number"
+                                    className="form-control text-center"
+                                    name="qty"
+                                    value={r?.qty}
+                                    onFocus={(e) => e.target.select()}
+                                    onChange={(e) => dispatch(qty_KeyDownCart(e.target.value, index))}
+                                    onBlur={(e) => dispatch(qty_LeaveCart(e.target.value, index))}
+                                  />
+                                  <button className="btn text-white ms-1 qty-btn" onClick={() => dispatch(incrementCart(index))}>
+                                    <FaPlus className="qty-i" />
+                                  </button>
+                                </td>
+                                <td className="p-2">
                                   <Select
+                                    options={uomOptions(r.minUom, r.maxUom)}
                                     classNamePrefix="react-select"
-                                    options={customer}
-                                    placeholder="Newest"
+                                    placeholder="Choose Option"
+                                    onChange={(e) => handleRowUOM(e, index)}
+                                    value={r.uom ? { value: r.uom, label: r.uom } : null}
                                   />
-                                </div>
-                                <div className="col-lg-2 col-sm-2 col-2 ps-0">
-                                  <div className="add-icon">
-                                    <Link to="#" className="choose-add">
-                                      <PlusCircle className="plus" />
-                                    </Link>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-lg-4 col-sm-6 col-12">
-                            <div className="input-blocks">
-                              <label>Date</label>
-                              <div className="input-groupicon calender-input">
-                                <Calendar className="info-img" />
-                                <DatePicker
-                                  selected={selectedDate}
-                                  onChange={handleDateChange}
-                                  type="date"
-                                  className="filterdatepicker"
-                                  dateFormat="dd-MM-yyyy"
-                                  placeholder="Choose Date"
+                                </td>
+                                <td className="p-2"><input type="number" className="form-control" value={r.price}
+                                  onChange={(e) => dispatch(rowPriceCart(e.target.value, index))}
+                                  onBlur={(e) => dispatch(rowPrice_Leave(e.target.value, index))}
                                 />
-                              </div>
-                            </div>
-                          </div>
-                          <div className="col-lg-4 col-sm-6 col-12">
-                            <div className="input-blocks">
-                              <label>Supplier</label>
-                              <Select
-                                classNamePrefix="react-select"
-                                // options={suppliername}
-                                placeholder="Newest"
-                              />
-                            </div>
-                          </div>
-                          <div className="col-lg-12 col-sm-6 col-12">
-                            <div className="input-blocks">
-                              <label>Product Name</label>
-                              <div className="input-groupicon select-code">
-                                <input
-                                  type="text"
-                                  placeholder="Please type product code and select"
-                                />
-                                <div className="addonset">
-                                  <ImageWithBasePath
-                                    src="assets/img/icons/qrcode-scan.svg"
-                                    alt="img"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="table-responsive no-pagination">
-                          <table className="table  datanew">
-                            <thead>
-                              <tr>
-                                <th>Product</th>
-                                <th>Qty</th>
-                                <th>Purchase Price($)</th>
-                                <th>Discount($)</th>
-                                <th>Tax(%)</th>
-                                <th>Tax Amount($)</th>
-                                <th>Unit Cost($)</th>
-                                <th>Total Cost(%)</th>
+                                </td>
+                                <td className="p-2">{formatCurrency(r.total)}</td>
+                                <td className="p-2"><input type="number" className="form-control" value={r.discPerc} onChange={(e) => dispatch(rowDiscCart(e.target.value, index))} /></td>
+                                <td className="p-2">{formatCurrency(r.disc)}</td>
+                                <td className="p-2"><input type="number" className="form-control" value={r.gstPerc} onChange={(e) => dispatch(rowGstCart(e.target.value, index))} /></td>
+                                <td className="p-2">{formatCurrency(r.gst)}</td>
+                                <td className="p-2">{formatCurrency(r.netTotal)}</td>
+                                <td className="p-2">{formatCurrency(r.costPrice)}</td>
+                                <td>
+                                  <Link className="delete-set" onClick={() => removeCartRowAlert(index)}><ImageWithBasePath src="assets/img/icons/delete.svg" alt="svg" /></Link>
+                                </td>
                               </tr>
-                            </thead>
-                            <tbody>
-                              <tr>
-                                <td />
-                                <td />
-                                <td />
-                                <td />
-                                <td />
-                                <td />
-                                <td />
-                                <td />
-                              </tr>
-                            </tbody>
-                          </table>
-                        </div>
-                        <div className="row">
-                          <div className="col-lg-6 ms-auto">
-                            <div className="total-order w-100 max-widthauto m-auto mb-4">
-                              <ul>
-                                <li>
-                                  <h4>Order Tax</h4>
-                                  <h5>$ 0.00</h5>
-                                </li>
-                                <li>
-                                  <h4>Discount</h4>
-                                  <h5>$ 0.00</h5>
-                                </li>
-                                <li>
-                                  <h4>Shipping</h4>
-                                  <h5>$ 0.00</h5>
-                                </li>
-                                <li>
-                                  <h4>Grand Total</h4>
-                                  <h5>$ 0.00</h5>
-                                </li>
-                              </ul>
-                            </div>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="row">
+                        <div className="col-lg-2 col-md-6 col-sm-12">
+                          <div className="input-blocks">
+                            <label>Total Items#</label>
+                            <input type="text" value={cartStore.length} />
                           </div>
                         </div>
-                        <div className="row">
-                          <div className="col-lg-3 col-sm-6 col-12">
-                            <div className="input-blocks">
-                              <label>Order Tax</label>
-                              <div className="input-groupicon select-code">
-                                <input
-                                  type="text"
-                                  defaultValue={0}
-                                  className="p-2"
+                        <div className="col-lg-2 col-md-6 col-sm-12">
+                          <div className="input-blocks">
+                            <label>Total</label>
+                            <input type="number" className="form-control" value={cart.total.toFixed(2)} />
+                          </div>
+                        </div>
+                        <div className="col-lg-2 col-md-6 col-sm-12">
+                          <div className="input-blocks">
+                            <label>Discount</label>
+                            <div className="row">
+                              <div className="col-lg-6 col-md-6 col-sm-12">
+                                <Select
+                                  classNamePrefix="react-select"
+                                  options={discount}
+                                  onChange={(e) => handleChangeDiscount(e.value)}
+                                  value={selectDiscount}
                                 />
+                              </div>
+                              <div className="col-lg-6 col-md-6 col-sm-12">
+                                <input type="number" className="form-control" value={cart.disc.toFixed(2)} />
                               </div>
                             </div>
                           </div>
-                          <div className="col-lg-3 col-sm-6 col-12">
-                            <div className="input-blocks">
-                              <label>Discount</label>
-                              <div className="input-groupicon select-code">
-                                <input
-                                  type="text"
-                                  defaultValue={0}
-                                  className="p-2"
+                        </div>
+                        <div className="col-lg-2 col-md-6 col-sm-12">
+                          <div className="input-blocks">
+                            <label>Tax</label>
+                            <div className="row">
+                              <div className="col-lg-6 col-md-6 col-sm-12">
+                                <Select
+                                  classNamePrefix="react-select"
+                                  options={gst}
+                                  onChange={(e) => handleChangeGst(e.value)}
+                                  value={selectGst}
                                 />
                               </div>
-                            </div>
-                          </div>
-                          <div className="col-lg-3 col-sm-6 col-12">
-                            <div className="input-blocks">
-                              <label>Shipping</label>
-                              <div className="input-groupicon select-code">
-                                <input
-                                  type="text"
-                                  defaultValue={0}
-                                  className="p-2"
-                                />
+                              <div className="col-lg-6 col-md-6 col-sm-12">
+                                <input type="number" className="form-control" value={cart.gst.toFixed(2)} />
                               </div>
                             </div>
-                          </div>
-                          <div className="col-lg-3 col-sm-6 col-12">
-                            <div className="input-blocks mb-5">
-                              <label>Status</label>
-                              <Select
-                                classNamePrefix="react-select"
-                                options={statusupdate}
-                                placeholder="status"
-                              />
-                            </div>
-                          </div>
-                          <div className="col-lg-12 text-end">
-                            <button
-                              type="button"
-                              className="btn btn-cancel add-cancel me-3"
-                              data-bs-dismiss="modal"
-                            >
-                              Cancel
-                            </button>
-                            <Link to="#" className="btn btn-submit add-sale">
-                              Submit
-                            </Link>
                           </div>
                         </div>
-                      </form>
+                        <div className="col-lg-2 col-md-6 col-sm-12">
+                          <div className="input-blocks">
+                            <label>Net Total</label>
+                            <input type="number" className="form-control" value={cart.netTotal.toFixed(2)} />
+                          </div>
+                        </div>
+                        <div className="col-lg-2 col-md-6 col-sm-12">
+                          <div className="input-blocks">
+                            <label>Payment Status</label>
+                            <Select
+                              options={paymentStatus}
+                              classNamePrefix="react-select"
+                              placeholder="Choose Option"
+                              onChange={(e) => handleStatus(e.value)}
+                              value={selectStatus}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="col-lg-12 text-end">
+                        <button
+                          type="button"
+                          className="btn btn-cancel add-cancel me-3"
+                          data-bs-dismiss="modal"
+                        >
+                          Cancel
+                        </button>
+                        <Link to="#" className="btn btn-submit add-sale" onClick={handleFormSubmit}>
+                          Submit
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -751,26 +1013,24 @@ const SalesList = () => {
         {/* /add popup */}
         {/* details popup */}
         <div className="modal fade" id="sales-details-new">
-          <div className="modal-dialog sales-details-modal">
+          <div className="modal-dialog modal-fullscreen">
             <div className="modal-content">
               <div className="page-wrapper details-blk">
                 <div className="content p-0">
-                  <div className="page-header p-4 mb-0">
-                    <div className="add-item d-flex">
-                      <div className="page-title modal-datail">
-                        <h4>Sales Detail : SI/Inv-{invID}</h4>
-                      </div>
-                      {/* <div className="page-btn">
-                              <Link
-                                to="#"
-                                className="btn btn-added"
-                                data-bs-dismiss="modal"
-                              >
-                                <PlusCircle className="me-2" />
-                                Add New Sales
-                              </Link>
-                            </div> */}
+                  <div className="modal-header border-0 custom-modal-header">
+                    <div className="page-title">
+                      <h4>Sales Detail : SI/Inv-{invID}</h4>
                     </div>
+                    <button
+                      type="button"
+                      className="close"
+                      data-bs-dismiss="modal"
+                      aria-label="Close"
+                    >
+                      <span aria-hidden="true">×</span>
+                    </button>
+                  </div>
+                  {/* <div className="page-header p-4 mb-0">
                     <ul className="table-top-head">
                       <li>
                         <Link
@@ -821,7 +1081,7 @@ const SalesList = () => {
                         </Link>
                       </li>
                     </ul>
-                  </div>
+                  </div> */}
                   <div className="card">
                     <div className="card-body">
                       {(() => {
@@ -829,7 +1089,7 @@ const SalesList = () => {
                           const inv = posts.find((x) => x.receiptNo === invID);
                           let contact = ""; let address = ""; let customerName = "";
                           if (inv.customerId > 0) {
-                            const cus = customer.find((x) => x.customerId === inv.customerId);
+                            const cus = customerStore.find((x) => x.customerId === inv.customerId);
                             contact = cus.contact;
                             address = cus.address;
                             customerName = cus.customerName;
@@ -881,7 +1141,7 @@ const SalesList = () => {
                                         <th>Product</th>
                                         <th>Qty</th>
                                         <th>Sale Price($)</th>
-                                        {/* <th>Gross Amount</th> */}
+                                        <th>Gross Amount</th>
                                         <th>Discount(%)</th>
                                         <th>Discount Amount($)</th>
                                         <th>Tax(%)</th>
@@ -896,28 +1156,9 @@ const SalesList = () => {
                                             <img src={getImageFromUrl(stock.find((i) => i.productId === x.productId)?.imageName)} alt="product" width={50} height={50} />
                                             <span style={{ paddingLeft: "5px" }}> {stock.find((i) => i.productId === x.productId)?.productName}</span>
                                           </td>
-                                          <td>
-                                            <div className="product-quantity">
-                                              <span className="quantity-btn">
-                                                +
-                                                <PlusCircle />
-                                              </span>
-                                              <input
-                                                type="text"
-                                                className="quntity-input"
-                                                value={x.qty}
-                                                readOnly
-                                              />
-                                              <span className="quantity-btn">
-                                                {/* <i
-                                          data-feather="minus-circle"
-                                          className="feather-minus-circle"
-                                        /> */}
-                                                <MinusCircle />
-                                              </span>
-                                            </div>
-                                          </td>
+                                          <td>{x.qty}</td>
                                           <td>{formatCurrency(x.salePrice)}</td>
+                                          <td>{formatCurrency(x.qty * x.salePrice)}</td>
                                           <td>{x.discountPrct}</td>
                                           <td>{formatCurrency(x.discountAmount)}</td>
                                           <td>{x.gstprct}</td>
@@ -935,12 +1176,20 @@ const SalesList = () => {
                                     <div className="total-order w-100 max-widthauto m-auto mb-4">
                                       <ul>
                                         <li>
-                                          <h4>Order Tax</h4>
-                                          <h5>{formatCurrency(inv.gst)}</h5>
+                                          <h4>Total Items#</h4>
+                                          <h5>{inv.item}</h5>
                                         </li>
                                         <li>
-                                          <h4>Discount</h4>
+                                          <h4>Total</h4>
+                                          <h5>{inv.total}</h5>
+                                        </li>
+                                        <li>
+                                          <h4>Discount({inv.discPerc}%)</h4>
                                           <h5>{formatCurrency(inv.discount)}</h5>
+                                        </li>
+                                        <li>
+                                          <h4>GST(Tax{inv.gstPerc}%)</h4>
+                                          <h5>{formatCurrency(inv.gst)}</h5>
                                         </li>
                                         <li>
                                           <h4>Grand Total</h4>
@@ -995,7 +1244,7 @@ const SalesList = () => {
                                 <div className="col-lg-10 col-sm-10 col-10">
                                   <Select
                                     classNamePrefix="react-select"
-                                    options={customer}
+                                    options={customerStore}
                                     placeholder="Newest"
                                   />
                                 </div>
@@ -1449,7 +1698,7 @@ const SalesList = () => {
                         <label>Payment type</label>
                         <Select
                           classNamePrefix="react-select"
-                          options={paymentMode}
+                          options={paymentModes}
                           placeholder="Newest"
                         />
                       </div>

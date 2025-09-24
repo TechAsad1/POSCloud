@@ -13,7 +13,7 @@ import {
 } from "feather-icons-react/build/IconComponents";
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Select from "react-select";
 import ImageWithBasePath from "../../core/img/imagewithbasebath";
 import Brand from "../../core/modals/inventory/brand";
@@ -22,9 +22,10 @@ import Swal from "sweetalert2";
 import { all_routes } from "../../Router/all_routes";
 import { OverlayTrigger, Tooltip } from "react-bootstrap";
 import Table from "../../core/pagination/datatable";
-import { deleteProduct, getBrand, getCategory, getProduct, getUnit, getUsers, setInvID, setToogleHeader } from "../../core/redux/action";
+import { deleteProduct, getBrand, getCategory, getProduct, getUnit, getUsers, setToogleHeader } from "../../core/redux/action";
 import { Download } from "react-feather";
 import { getImageFromUrl } from "../../helper/helpers";
+import { useLoginData } from "../../helper/loginUserData";
 
 const ProductList = () => {
   const dispatch = useDispatch();
@@ -102,11 +103,11 @@ const ProductList = () => {
         <div className="action-table-data">
           <div className="edit-delete-action">
             <div className="input-block add-lists"></div>
-            <Link className="me-2 p-2" to={route.productdetails} onClick={() => handleSetInvID(record.productId)}>
+            <Link className="me-2 p-2" to={`${route.productdetails}/${record.productId}`}>
               <Eye className="feather-view" />
             </Link>
 
-            <Link className="me-2 p-2" to={route.editproduct} onClick={() => handleSetInvID(record.productId)}>
+            <Link className="me-2 p-2" to={`${route.editproduct}/${record.productId}`}>
               <Edit className="feather-edit" />
             </Link>
             <Link
@@ -184,13 +185,14 @@ const ProductList = () => {
   const users = useSelector((state) => state.users);
   const [search, setSearch] = useState({ name: "Choose Product", categoryId: 0, brandId: 0, minUom: "Choose MinUom", min: 0, max: 0 });
   const [productList, setProductList] = useState([{ value: "Choose Product", label: 'Choose Product' }]);
+
   const [categoryList, setCategoryList] = useState([{ value: 0, label: 'Choose Category' }]);
   const [brandList, setBrandList] = useState([{ value: 0, label: 'Choose Brand' }]);
   const [unitList, setUnitList] = useState([{ value: "Choose MinUom", label: 'Choose MinUom' }]);
   const [dataSource, setDataSource] = useState([]);
-  
+
   const [posts, setPosts] = useState([]);
-  const [loginUser, setLoginUser] = useState(null);
+  const loginUser = useLoginData();
 
   useEffect(() => {
     if (loginUser) {
@@ -252,10 +254,6 @@ const ProductList = () => {
     ]);
   }, [units]);
 
-  const handleSetInvID = (e) => {
-    dispatch(setInvID(e));
-    localStorage.setItem("proID", JSON.stringify(e));
-  }
   //Search Engine
   const searchEngine = (action, key) => {
     if (action === "newest") {
@@ -279,7 +277,6 @@ const ProductList = () => {
       ));
     }
   }
-
   const handleFilter = () => {
     const filtered = posts.filter((x) => {
       if (search.name !== "Choose Product" &&
@@ -314,17 +311,6 @@ const ProductList = () => {
     if (!loginUser)
       setDataSource(filtered.filter((i) => i.clientId === loginUser.clientId && i.branchId === loginUser.branchId));
   };
-
-  const navigate = useNavigate();
-  const val = localStorage.getItem("userID");
-  useEffect(() => {
-    if (!isNaN(val) && Number.isInteger(Number(val)) && Number(val) > 0) {
-      const id = Number(val);
-      setLoginUser(users.find((i) => i.userId === id));
-    }
-    else
-      navigate(route.signin);
-  }, [users, navigate]);
 
   return (
     <div className="page-wrapper">

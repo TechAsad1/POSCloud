@@ -7,7 +7,7 @@ export const all_routes = {
   units: "/units",
   variantyattributes: "/variant-attributes",
   warranty: "/warranty",
-  barcode: "/barcode",
+  // barcode: "/barcode",
   alerts: "/ui-alerts",
   accordion: "/ui-accordion",
   avatar: "/ui-avatar",

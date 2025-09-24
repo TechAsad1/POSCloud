@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useNavigate } from "react-router-dom/dist";
+import { Link } from "react-router-dom/dist";
 import AddBrand from "../../core/modals/inventory/addbrand";
 import EditBrand from "../../core/modals/inventory/editbrand";
 import Swal from "sweetalert2";
@@ -24,25 +24,24 @@ import withReactContent from "sweetalert2-react-content";
 import { useEffect } from "react";
 import { format } from "date-fns";
 import { dateFormat } from "../../helper/helpers";
-import { all_routes } from "../../Router/all_routes";
+import { useLoginData } from "../../helper/loginUserData";
 
 const BrandList = () => {
 
-  const route = all_routes;
   const dispatch = useDispatch();
   const data = useSelector((state) => state.toggle_header);
   const postData1 = useSelector((state) => state.brands);
-  const users = useSelector((state) => state.users);
   const loading = useSelector((state) => state.loading);
+  const users = useSelector((state) => state.users);
   const [getEditMode, setEditMode] = useState(false);
   const [search, setSearch] = useState({ name: "Choose Brand", date: null, status: true });
   const [option, setOption] = useState([{ value: "Choose Brand", label: 'Choose Brand' }]);
   const [getInvId, setInvId] = useState();
   const [dataSource, setDataSource] = useState([]);
   const [insertMode, setInsertMode] = useState(false);
+  const loginUser = useLoginData();
 
   const [postData, setPosts] = useState([]);
-  const [loginUser, setLoginUser] = useState(null);
 
   useEffect(() => {
     if (loginUser) {
@@ -263,17 +262,6 @@ const BrandList = () => {
   const handleInsert = () => {
     setInsertMode(true);
   }
-
-  const navigate = useNavigate();
-  const val = localStorage.getItem("userID");
-  useEffect(() => {
-    if (!isNaN(val) && Number.isInteger(Number(val)) && Number(val) > 0) {
-      const id = Number(val);
-      setLoginUser(users.find((i) => i.userId === id));
-    }
-    else
-      navigate(route.signin);
-  }, [users, navigate]);
 
   return (
     <div>

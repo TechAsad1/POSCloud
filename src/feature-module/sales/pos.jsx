@@ -1,11 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import ImageWithBasePath from '../../core/img/imagewithbasebath'
 import { RefreshCcw, RotateCw, ShoppingCart } from 'feather-icons-react/build/IconComponents'
-import { Check, CheckCircle, Edit, MoreVertical, Trash2, UserPlus } from 'react-feather'
+import { Check, CheckCircle, MoreVertical, Trash2, UserPlus } from 'react-feather'
 import Select from 'react-select'
-import PlusCircle from 'feather-icons-react/build/IconComponents/PlusCircle'
-import MinusCircle from 'feather-icons-react/build/IconComponents/MinusCircle'
 import { OverlayTrigger, Tooltip } from 'react-bootstrap'
 import withReactContent from 'sweetalert2-react-content'
 import Swal from 'sweetalert2'
@@ -15,18 +13,18 @@ import 'slick-carousel/slick/slick-theme.css';
 import { useDispatch, useSelector } from 'react-redux'
 import no_image from "../../images/no_image.png";
 import cartEmpty from "../../images/cartEmpty.png";
-import { addToSaleCart, clearCart, decrementCart, getCategory, getCustomer, getProduct, getSaleInv, getTransaction, getTransactionID, getUsers, incrementCart, insertCustomer, insertSale, removeCartRow, updateCartRow } from "../../core/redux/action";
+import { addToSaleCart, changeUnitCartRow, clearCart, decrementCart, getCategory, getCustomer, getProduct, getSaleInv, getTransaction, getTransactionID, incrementCart, insertCustomer, insertSale, qty_KeyDownCart, qty_LeaveCart, removeCartRow } from "../../core/redux/action";
 import { useReactToPrint } from 'react-to-print';
 import { getImageFromUrl } from '../../helper/helpers'
 import axios from 'axios'
-import { all_routes } from '../../Router/all_routes'
 import "./pos.css";
 import config from '../../core/redux/api/config'
+import { FaPlus } from "react-icons/fa";
+import { FaMinus } from "react-icons/fa";
+import { useLoginData } from '../../helper/loginUserData'
 
 const Pos = () => {
 
-
-  const route = all_routes;
   const gst = [
     { value: '0', label: 'GST 0%' },
     { value: '5', label: 'GST 5%' },
@@ -127,10 +125,9 @@ const Pos = () => {
   const invStore = useSelector((state) => state.saleInv);
   const trInv = useSelector((state) => state.trInv);
   const trID = useSelector((state) => state.trID);
-  const users = useSelector((state) => state.users);
+  const loginUser = useLoginData();
 
   const [productStore, setPosts] = useState([]);
-  const [loginUser, setLoginUser] = useState(null);
 
   useEffect(() => {
     if (loginUser) {
@@ -165,7 +162,6 @@ const Pos = () => {
   const scanRef = useRef();
   const closeDebitCardBtn = useRef();
   const cardInputRef = useRef();
-  const closeUpdateProBtn = useRef();
   const [errors, setErrors] = useState({});
 
 
@@ -177,7 +173,6 @@ const Pos = () => {
     dispatch(getProduct());
     dispatch(getCustomer());
     dispatch(getSaleInv());
-    dispatch(getUsers());
   }, [dispatch]);
   useEffect(() => {
     const customer1 = customerStore
@@ -217,6 +212,9 @@ const Pos = () => {
     calculation();
   }, [cart.gstPerc, cart.discPerc]);
 
+
+  const barcodeRef = useRef();
+
   const calculation = () => {
     let _total = cartStore.reduce((sum, i) => { return sum + i.netTotal }, 0);
     let dis = (cart.discPerc * _total) / 100;
@@ -233,6 +231,15 @@ const Pos = () => {
     removeEmptyCartImg();
     dispatch(addToSaleCart(productStore.filter((a) => a.productId == e.key)));
   }
+  const handleChangeBarcode = (e) => {
+    if (e != "") {
+      const x = productStore.filter((i) => i.clientId === loginUser?.clientId && i.branchId === loginUser?.branchId && i.qrcodeBarcode === e);
+      if (x.length > 0) {
+        dispatch(addToSaleCart(x));
+        barcodeRef.current.value = "";
+      }
+    }
+  };
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("en-PK", {
       style: "currency",
@@ -314,24 +321,24 @@ const Pos = () => {
       } catch (error) {
         console.log(error.message);
       }
-      cartStore.map((x) => (
-        dispatch(insertSale({
-          clientId: loginUser?.clientId,
-          branchId: loginUser?.branchId,
-          receiptNo: rid,
-          productId: x.id,
-          quantity: x.qty,
-          uom: x.minUom || "PCS",
-          factor: x.factor,
-          salePrice: x.price,
-          gstprct: x.gstPerc,
-          gstamount: x.gst,
-          discountPrct: x.discPerc,
-          discountAmount: x.disc,
-          productTotal: x.netTotal,
-          productCost: 0,
-        }))
-      ));
+      const array = cartStore.map((x) => ({
+        clientId: loginUser?.clientId,
+        branchId: loginUser?.branchId,
+        receiptNo: rid,
+        productId: x.id,
+        quantity: x.qty,
+        uom: x.minUom || "PCS",
+        factor: x.factor,
+        salePrice: x.price,
+        gstprct: x.gstPerc,
+        gstamount: x.gst,
+        discountPrct: x.discPerc,
+        discountAmount: x.disc,
+        productTotal: x.netTotal,
+        productCost: 0,
+      }));
+      dispatch(insertSale(array));
+      dispatch(clearCart());
       successAlert();
     }
     else {
@@ -423,6 +430,15 @@ const Pos = () => {
     // dispatch(clearCart());
     // addEmptyCartImg();
   };
+  const errorQtyAlert = (msg) => {
+    MySwal.fire({
+      icon: "error",
+      title: "Error",
+      text: msg,
+      confirmButtonText: "Ok",
+      confirmButtonColor: "#d33",
+    })
+  };
 
   const filteredCategory = (productStore.filter(x => {
     if (selectedCat === 0) {
@@ -432,98 +448,37 @@ const Pos = () => {
       return x.categoryId === selectedCat;
     }
   }));
-  const handleQtyPlus = (id) => {
+  const handleQtyPlus = (id, index) => {
     const pro = productStore.filter((x) => x.productId === id);
     const proCart = cartStore.filter((x) => x.id === id);
     const reqQty = proCart[0].qty + 1;
-    if (!(reqQty > pro[0].qty)) {
-      dispatch(incrementCart(id));
-    }
+    if (!(reqQty > pro[0].qty))
+      dispatch(incrementCart(index));
+    else
+      errorQtyAlert(" Required qty (" + reqQty + ") not available.. Please update stock!");
   }
+  const handleRowDecrement = (num, index) => {
+    if (num > 1) {
+      dispatch(decrementCart(index))
+    }
+  };
   const receiptRef = useRef();
   const handlePrintBtn = useReactToPrint({
     content: () => receiptRef.current,
   });
 
-
-  //Update Product
-  const [editProID, setEditProID] = useState(0);
-  const [updatePro, setUpdatePro] = useState({ gstPerc: 0, gst: 0, discPerc: 0, disc: 0, _price: 0, qty: 0, total: 0 });
-  const [unitList, setUnitList] = useState([]);
-  const [selectUnit, setSelectedUnit] = useState([]);
-  const handleSelectedUnit = (e) => {
-    var x = cartStore.find((x) => x.id === editProID);
-    if (!x) return;
-    setSelectedUnit([{ value: e.value, label: e.label }])
-    if (e.value === x.minUom) {
-      //Pcs
-      let _singlePrice = x.price / x.factor;
-      let _total = _singlePrice * x.qty;
-      let _gst = _total * updatePro.gstPerc / 100;
-      let _disc = _total * updatePro.discPerc / 100;
-      _total -= _disc;
-      _total += _gst;
-      setUpdatePro({ ...updatePro, _selectedUnit: e.value, _price: _singlePrice, total: _total, gst: _gst, disc: _disc });
-    }
-    else {
-      //Box
-      let _total = x.price * x.qty;
-      let _gst = _total * updatePro.gstPerc / 100;
-      let _disc = _total * updatePro.discPerc / 100;
-      _total -= _disc;
-      _total += _gst;
-      setUpdatePro({ ...updatePro, _selectedUnit: e.value, _price: x.price, total: _total, gst: _gst, disc: _disc });
-    }
-  }
-  useEffect(() => {
-    if (unitList.length === 1)
-      setSelectedUnit(unitList[0]);
-    else
-      setSelectedUnit(unitList[1]);
-  }, [unitList[0]]);
-  const handleEditProductByID = (e) => {
-    setEditProID(e);
-    const x = cartStore.filter((i) => i.id === e);
-    if (!x) return;
-    setUnitList([]);
-    let units = [];
-    if (x[0].minUom === x[0].maxUom)
-      units = [{ value: x[0].minUom, label: x[0].minUom }];
-    else {
-      units = [{ value: x[0].minUom, label: x[0].minUom },
-      ...(x[0].maxUom ? [{ value: x[0].maxUom, label: x[0].maxUom }] : [])];
-    }
-    setUnitList(units);
-    setUpdatePro({ ...updatePro, qty: x[0].qty, _price: x[0].price, total: (x[0].total - x[0].disc) + x[0].gst, discPerc: x[0].discPerc, disc: x[0].disc, gstPerc: x[0].gstPerc, gst: x[0].gst });
-  }
-  const calculateGst_Edit = (perc, total) => {
-    let _total = total - updatePro.disc;
-    let _gst = _total * perc / 100;
-    setUpdatePro({ ...updatePro, total: _total + _gst, gstPerc: perc, gst: _gst });
-  }
-  const calculateDisc_Edit = (perc, total) => {
-    let _total = total;
-    let _disc = _total * perc / 100;
-    setUpdatePro({ ...updatePro, total: (_total - _disc) + updatePro.gst, discPerc: perc, disc: _disc });
-  }
-  const updatePro_Click = (e) => {
-    e.preventDefault();
-    dispatch(updateCartRow(editProID, selectUnit?.value, updatePro._price, updatePro.gstPerc, updatePro.gst, updatePro.discPerc, updatePro.disc, updatePro._price * updatePro.qty, updatePro.total));
-    closeUpdateProBtn.current.click();
-  }
   //Update Product End
-
-  const navigate = useNavigate();
-  const val = localStorage.getItem("userID");
-  useEffect(() => {
-    if (!isNaN(val) && Number.isInteger(Number(val)) && Number(val) > 0) {
-      const id = Number(val);
-      setLoginUser(users.find((i) => i.userId === id));
-    }
+  const uomOptions = (min, max) => {
+    if (min === max)
+      return [
+        { value: min, label: min },
+      ]
     else
-      navigate(route.signin);
-  }, [users, navigate]);
-
+      return [
+        { value: min, label: min },
+        ...(max ? [{ value: max, label: max }] : [])
+      ]
+  }
 
   return (
     <div>
@@ -654,14 +609,24 @@ const Pos = () => {
                       <UserPlus className="feather-16" />
                     </Link>
                   </div>
-                  <div className="input-block">
-                    <Select
-                      options={getProductList}
-                      classNamePrefix="react-select"
-                      placeholder="Select product..."
-                      onChange={handleSelectProduct}
-                    />
+                  <div className="row">
+                    <div className="col-lg-8">
+                      <label>Product Name</label>
+                      <div className="input-block">
+                        <Select
+                          options={getProductList}
+                          classNamePrefix="react-select"
+                          placeholder="Select product..."
+                          onChange={handleSelectProduct}
+                        />
+                      </div>
+                    </div>
+                    <div className="col-lg-4">
+                      <label>Barcode</label>
+                      <input type="text" className="form-control" ref={barcodeRef} onChange={(e) => handleChangeBarcode(e.target.value)} placeholder="search by product barcode..." />
+                    </div>
                   </div>
+
                 </div>
                 <div className="product-added block-section">
                   <div className="head-text d-flex align-items-center justify-content-between">
@@ -680,12 +645,10 @@ const Pos = () => {
                     </Link>
                   </div>
                   <div className="product-wrap" ref={cartDivRef}>
-                    {cartStore && cartStore.map((a) => (
-                      <div className="product-list d-flex align-items-center justify-content-between" key={a.id}>
+                    {cartStore && cartStore.map((a, index) => (
+                      <div className="product-list d-flex align-items-center justify-content-between" key={index}>
                         <div
                           className="d-flex align-items-center product-info"
-                          data-bs-toggle="modal"
-                          data-bs-target="#products"
                         >
                           <Link to="#" className="img-bg">
                             <img
@@ -700,45 +663,32 @@ const Pos = () => {
                             </h6>
                             <p>{formatCurrency(a.netTotal)}</p>
                           </div>
+                          <Select
+                            className='react-select flex-grow-1 ms-3'
+                            options={uomOptions(a.minUom, a.maxUom)}
+                            onChange={(e) => dispatch(changeUnitCartRow(e.value, index))}
+                            value={a.uom ? { value: a.uom, label: a.uom } : null}
+                          />
                         </div>
-                        <div className="qty-item text-center">
-                          <OverlayTrigger
-                            placement="top"
-                            overlay={<Tooltip id="tooltip-minus">Minus</Tooltip>}
-                          >
-                            <Link
-                              to="#"
-                              className="dec d-flex justify-content-center align-items-center"
-                              onClick={() => dispatch(decrementCart(a.id))}
-                            >
-                              <MinusCircle className="feather-14" />
-                            </Link>
-                          </OverlayTrigger>
-
+                        <div className="d-flex text-center w-25">
+                          <button className="btn text-white me-1 qty-btn" onClick={() => handleRowDecrement(a?.qty, index)}>
+                            <FaMinus className="qty-i" />
+                          </button>
                           <input
                             type="text"
                             className="form-control text-center"
                             name="qty"
                             value={a.qty}
-                            readOnly
+                            onFocus={(e) => e.target.select()}
+                            onChange={(e) => dispatch(qty_KeyDownCart(e.target.value, index))}
+                            onBlur={(e) => dispatch(qty_LeaveCart(e.target.value, index))}
                           />
-                          <OverlayTrigger
-                            placement="top"
-                            overlay={<Tooltip id="tooltip-plus">Plus</Tooltip>}
-                          >
-                            <Link
-                              to="#" onClick={() => handleQtyPlus(a.id)}
-                              className="inc d-flex justify-content-center align-items-center"
-                              data-bs-toggle="tooltip"
-                              data-bs-placement="top"
-                              title="plus"
-                            >
-                              <PlusCircle className="feather-14" />
-                            </Link>
-                          </OverlayTrigger>
+                          <button className="btn text-white ms-1 qty-btn" onClick={() => handleQtyPlus(a.id, index)}>
+                            <FaPlus className="qty-i" />
+                          </button>
                         </div>
                         <div className="d-flex align-items-center action">
-                          <Link
+                          {/* <Link
                             className="btn-icon edit-icon me-2"
                             to="#"
                             data-bs-toggle="modal"
@@ -746,8 +696,8 @@ const Pos = () => {
                             onClick={() => handleEditProductByID(a.id)}
                           >
                             <Edit className="feather-14" />
-                          </Link>
-                          <Link onClick={() => showConfirmationAlert(a.id)}
+                          </Link> */}
+                          <Link onClick={() => showConfirmationAlert(index)}
                             className="btn-icon delete-icon confirm-text"
                             to="#"
                             key={a.id}
@@ -771,7 +721,6 @@ const Pos = () => {
                             placeholder="Choose"
                             onChange={(e) => setCart({ ...cart, gstPerc: e.value })}
                           />
-
                         </div>
                       </div>
                       <div className="col-12 col-sm-4">
@@ -1356,120 +1305,6 @@ const Pos = () => {
         </div>
       </div>
       {/* /Hold */}
-      {/* Edit Product */}
-      <div
-        className="modal fade modal-default pos-modal"
-        id="edit-product"
-        aria-labelledby="edit-product"
-      >
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content">
-
-            <div className="modal-header p-4">
-              <h5>Edit Product</h5>
-              <button
-                type="button"
-                className="close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              >
-                <span aria-hidden="true">×</span>
-              </button>
-            </div>
-            <div className="modal-body p-4">
-              <form onSubmit={updatePro_Click}>
-                <div className="row">
-                  {(() => {
-                    const product = cartStore.find((e) => e.id === editProID);
-                    if (!product) return <p>Product not found!</p>;
-                    return (
-                      <>
-                        <div className="col-lg-6 col-sm-12 col-12">
-                          <div className="input-blocks add-product">
-                            <label>Product Name <span>*</span>
-                            </label>
-                            <input type="text" value={product?.name} />
-                          </div>
-                        </div>
-                        <div className="col-lg-6 col-sm-12 col-12">
-                          <div className="input-blocks add-product">
-                            <label>
-                              Sale Unit <span>*</span>
-                            </label>
-                            <Select
-                              classNamePrefix="react-select"
-                              options={unitList}
-                              onChange={(e) => handleSelectedUnit(e)}
-                              value={selectUnit}
-                            />
-                          </div>
-                        </div>
-                        <div className="col-lg-6 col-sm-12 col-12">
-                          <div className="input-blocks add-product">
-                            <label>
-                              Tax(%) <span>*</span>
-                            </label>
-                            <input type="number" className="form-control" value={updatePro.gstPerc} onChange={(e) => calculateGst_Edit(e.target.value, updatePro._price * product?.qty)} />
-                          </div>
-                        </div>
-                        <div className="col-lg-6 col-sm-12 col-12">
-                          <div className="input-blocks add-product">
-                            <label>
-                              Tax Amount($) <span>*</span>
-                            </label>
-                            <input type="number" className="form-control" value={updatePro.gst} readOnly />
-                          </div>
-                        </div>
-                        <div className="col-lg-6 col-sm-12 col-12">
-                          <div className="input-blocks add-product">
-                            <label>
-                              Discount(%) <span>*</span>
-                            </label>
-                            <input type="number" className="form-control" value={updatePro.discPerc} onChange={(e) => calculateDisc_Edit(e.target.value, updatePro._price * product?.qty)} />
-                          </div>
-                        </div>
-                        <div className="col-lg-6 col-sm-12 col-12">
-                          <div className="input-blocks add-product">
-                            <label>
-                              Discount Amount($) <span>*</span>
-                            </label>
-                            <input type="number" className="form-control" value={updatePro.disc} readOnly />
-                          </div>
-                        </div>
-
-
-                        <aside className="product-order-list">
-                          <div className="head d-flex align-items-center justify-content-end">
-                            <div className="">
-                              <h5>Total</h5>
-                              <span>{formatCurrency(updatePro.total)}</span>
-                            </div>
-                          </div>
-                        </aside>
-                      </>
-                    );
-                  })()}
-                </div>
-                <div className="modal-footer d-sm-flex justify-content-end">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    data-bs-dismiss="modal"
-                    ref={closeUpdateProBtn}
-                  >
-                    Close
-                  </button>
-                  <button to="#" className="btn btn-primary">
-                    Update
-                  </button>
-                </div>
-              </form>
-            </div>
-
-          </div>
-        </div>
-      </div>
-      {/* /Edit Product */}
       {/* Recent Transactions */}
       <div
         className="modal fade pos-modal"

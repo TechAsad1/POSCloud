@@ -7,14 +7,17 @@ import { insertUnit } from '../../redux/action';
 const AddUnit = (p) => {
     const dispatch = useDispatch();
     const [errors, setErrors] = useState({});
-    const [formData, setFormData] = useState({ uom: "", name: "", createdBy: p.userId, isActive: true });
+    const [formData, setFormData] = useState({ uom: "", name: "", createdBy: p?.userId, isActive: true });
     //Ref
     const uomRef = useRef();
     const nameRef = useRef();
-    const formRef = useRef(null);
+
     useEffect(() => {
-        clearForm(formRef.current);
+        clearForm();
     }, [p.insertMode]);
+    useEffect(() => {
+        setFormData({ ...formData, createdBy: p?.userId });
+    }, [p]);
     //Validation
     const validate = () => {
         let tempErrors = {};
@@ -35,11 +38,10 @@ const AddUnit = (p) => {
         return Object.keys(tempErrors).length === 0;
     };
     //Submit
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (validate(e)) {
+    const handleSubmit = async () => {
+        if (validate()) {
             dispatch(insertUnit(formData));
-            clearForm(e.target);
+            clearForm();
             successAlert(null);
         }
     };
@@ -57,11 +59,12 @@ const AddUnit = (p) => {
         p.setInsertMode(false);
     }
     //Clear
-    const clearForm = (e) => {
+    const clearForm = () => {
         nameRef.current.classList.remove("is-invalid");
         setErrors({ ...errors, name: "", uomErr: "" });
-        setFormData({ ...formData, name: "", uomErr: "", isActive: true });
-        e[0].value = "";
+        setFormData({ ...formData, name: "", uom: "", createdBy: p?.userId, isActive: true });
+        uomRef.current.value = "";
+        nameRef.current.value = "";
     }
     const handleUOM = (e) => {
         if (e.length > 3) {
@@ -98,44 +101,42 @@ const AddUnit = (p) => {
                                     </button>
                                 </div>
                                 <div className="modal-body custom-modal-body">
-                                    <form onSubmit={handleSubmit} ref={formRef}>
-                                        <div className="mb-3">
-                                            <label className="form-label">UOM Short Form</label>
-                                            <input type="text" className="form-control" ref={uomRef} value={formData.uom} onChange={(e) => handleUOM(e.target.value)} />
-                                            {errors.uomErr && <p style={{ color: "#ff7676" }}>{errors.uomErr}</p>}
+                                    <div className="mb-3">
+                                        <label className="form-label">UOM Short Form</label>
+                                        <input type="text" className="form-control" ref={uomRef} value={formData.uom} onChange={(e) => handleUOM(e.target.value)} />
+                                        {errors.uomErr && <p style={{ color: "#ff7676" }}>{errors.uomErr}</p>}
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label">Name</label>
+                                        <input type="text" className="form-control" ref={nameRef} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                                        {errors.name && <p style={{ color: "#ff7676" }}>{errors.name}</p>}
+                                    </div>
+                                    <div className="mb-0">
+                                        <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
+                                            <span className="status-label">Status</span>
+                                            <input
+                                                type="checkbox"
+                                                id="user2"
+                                                className="check"
+                                                defaultChecked="true"
+                                                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                                                value={formData.isActive}
+                                            />
+                                            <label htmlFor="user2" className="checktoggle" />
                                         </div>
-                                        <div className="mb-3">
-                                            <label className="form-label">Name</label>
-                                            <input type="text" className="form-control" ref={nameRef} value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-                                            {errors.name && <p style={{ color: "#ff7676" }}>{errors.name}</p>}
-                                        </div>
-                                        <div className="mb-0">
-                                            <div className="status-toggle modal-status d-flex justify-content-between align-items-center">
-                                                <span className="status-label">Status</span>
-                                                <input
-                                                    type="checkbox"
-                                                    id="user2"
-                                                    className="check"
-                                                    defaultChecked="true"
-                                                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                                                    value={formData.isActive}
-                                                />
-                                                <label htmlFor="user2" className="checktoggle" />
-                                            </div>
-                                        </div>
-                                        <div className="modal-footer-btn">
-                                            <button
-                                                type="button"
-                                                className="btn btn-cancel me-2"
-                                                data-bs-dismiss="modal"
-                                            >
-                                                Close
-                                            </button>
-                                            <button to="#" className="btn btn-submit">
-                                                Create Unit
-                                            </button>
-                                        </div>
-                                    </form>
+                                    </div>
+                                    <div className="modal-footer-btn">
+                                        <button
+                                            type="button"
+                                            className="btn btn-cancel me-2"
+                                            data-bs-dismiss="modal"
+                                        >
+                                            Close
+                                        </button>
+                                        <button to="#" className="btn btn-submit" onClick={handleSubmit}>
+                                            Create Unit
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>

@@ -7,7 +7,7 @@ import SalesDashbaord from "../feature-module/dashboard/salesdashbaord";
 import BrandList from "../feature-module/inventory/brandlist";
 import VariantAttributes from "../feature-module/inventory/variantattributes";
 import Warranty from "../feature-module/inventory/warranty";
-import PrintBarcode from "../feature-module/inventory/printbarcode";
+// import PrintBarcode from "../feature-module/inventory/printbarcode";
 import Grid from "../feature-module/uiinterface/grid";
 import Images from "../feature-module/uiinterface/images";
 import Lightboxes from "../feature-module/uiinterface/lightbox";
@@ -253,13 +253,13 @@ export const publicRoutes = [
     element: <Warranty />,
     route: Route,
   },
-  {
-    id: 9,
-    path: routes.barcode,
-    name: "barcode",
-    element: <PrintBarcode />,
-    route: Route,
-  },
+  // {
+  //   id: 9,
+  //   path: routes.barcode,
+  //   name: "barcode",
+  //   element: <PrintBarcode />,
+  //   route: Route,
+  // },
   {
     id: 10,
     path: routes.alerts,
@@ -837,8 +837,8 @@ export const publicRoutes = [
   },
   {
     id: 65,
-    path: routes.editproduct,
-    name: "editproduct",
+    path: routes.editproduct + `/:id`,
+    name: "editproduct/:id",
     element: <EditProduct />,
     route: Route,
   },
@@ -1362,8 +1362,8 @@ export const publicRoutes = [
   },
   {
     id: 113,
-    path: routes.productdetails,
-    name: "productdetails",
+    path: routes.productdetails + `/:id`,
+    name: "productdetails/:id",
     element: <ProductDetail />,
     route: Route,
   },
